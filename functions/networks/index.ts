@@ -16,6 +16,36 @@ serve(async (req) => {
     ) 
   `;
 
+  if (req.method === "POST") {
+    const { name, discipler_id } = await req.json();
+
+    const { data, error } = await supabase
+      .from("networks")
+      .insert({
+        name,
+        discipler_id,
+      })
+      .select(selectQuery)
+      .single();
+
+    // error handler
+    if (error) {
+      console.log(error);
+      return new Response(JSON.stringify({}), {
+        headers: { "Content-Type": "application/json" },
+        status: 409,
+      });
+    }
+
+    // success response
+    if (data) {
+      return new Response(JSON.stringify(data), {
+        headers: { "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+  }
+
   const idPattern = new URLPattern({ pathname: "/networks/:id" });
   const matchingPath = idPattern.exec(req.url);
 
