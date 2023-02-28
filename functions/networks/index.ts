@@ -64,11 +64,11 @@ serve(async (req) => {
   }
 
   if (req.method === "PATCH") {
-    const { name } = await req.json();
+    const { name, status } = await req.json();
 
     const { data, error } = await supabase
       .from("networks")
-      .update({ name })
+      .update({ name, status })
       .eq("id", id)
       .select(selectQuery)
       .single();
