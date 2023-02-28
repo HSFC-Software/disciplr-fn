@@ -5,30 +5,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { supabase } from "../utils/supabase-client.ts";
 
-const selectQuery = `
-  *,
-  main_network_id(
-    *,
-    discipler_id(
-      *
-    )
-  ),
-  networks_id(
-    *,
-    discipler_id(
-      *
-    )
-  )
-`;
-
 serve(async (req) => {
   // For more details on URLPattern, check https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API
-  const idPattern = new URLPattern({ pathname: "/link/network" });
-  const matchingPath = idPattern.exec(req.url);
+  const networkPattern = new URLPattern({ pathname: "/link/network" });
+  const networkMatchingPath = networkPattern.exec(req.url);
 
   // link/unlink network endpoint
-  console.log("matched");
-  if (matchingPath.pathname.input === "/link/network") {
+  if (networkMatchingPath?.pathname?.input === "/link/network") {
     if (req.method === "POST") {
       const { name, discipler_id, network_id } = await req.json();
 
@@ -55,7 +38,23 @@ serve(async (req) => {
           main_network_id: network_id,
           networks_id: data.id,
         })
-        .select(selectQuery)
+        .select(
+          `
+        *,
+        main_network_id(
+          *,
+          discipler_id(
+            *
+          )
+        ),
+        networks_id(
+          *,
+          discipler_id(
+            *
+          )
+        )
+        `
+        )
         .single();
 
       if (networkError) {
@@ -72,6 +71,73 @@ serve(async (req) => {
         status: 201,
       });
     }
+  }
+
+  const newDisciplePattern = new URLPattern({ pathname: "/link/disciple/new" });
+  const newDisciplePatternPath = newDisciplePattern.exec(req.url);
+
+  // link/unlink network disciple
+  if (newDisciplePatternPath?.pathname?.input === "/link/disciple/new") {
+    const { first_name, last_name, middle_name, network_id } = await req.json();
+
+    const disciplePayload = {};
+
+    if (first_name) disciplePayload.first_name = first_name;
+    if (last_name) disciplePayload.last_name = last_name;
+    if (middle_name) disciplePayload.middle_name = middle_name;
+
+    const { error, data: disciple } = await supabase
+      .from("disciples")
+      .insert(disciplePayload)
+      .select(`id`)
+      .single();
+
+    if (error) {
+      return new Response(JSON.stringify({}), {
+        headers: { "Content-Type": "application/json" },
+        status: 409,
+      });
+    }
+
+    const { error: linkError, data: linkData } = await supabase
+      .from("network_disciples") //
+      .insert({
+        network_id,
+        disciple_id: disciple.id,
+      })
+      .select(
+        `*,
+      network_id(
+        *,
+        discipler_id (
+          id,
+          first_name,
+          last_name,
+          status
+        )
+      ),
+      disciple_id(
+        id,
+        first_name,
+        last_name,
+        status
+      )`
+      )
+      .single();
+
+    if (linkError) {
+      await supabase.from("disciples").delete().eq("id", disciple.id);
+
+      return new Response(JSON.stringify({}), {
+        headers: { "Content-Type": "application/json" },
+        status: 409,
+      });
+    }
+
+    return new Response(JSON.stringify(linkData), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   return new Response(JSON.stringify({}), {
