@@ -16,9 +16,62 @@ serve(async (req) => {
     ) 
   `;
 
+  const idPattern = new URLPattern({ pathname: "/networks/:id" });
+  const matchingPath = idPattern.exec(req.url);
+
+  const id = matchingPath ? matchingPath.pathname.groups.id : null;
+
   if (req.method === "GET") {
     const query = supabase.from("networks").select(selectQuery);
+
+    if (id) {
+      query.eq("id", id);
+      query.single();
+
+      const { error, data } = await query;
+
+      // error handler
+      if (error) {
+        return new Response(JSON.stringify({}), {
+          headers: { "Content-Type": "application/json" },
+          status: 409,
+        });
+      }
+
+      // success response
+      return new Response(JSON.stringify(data), {
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const { data, error } = await query;
+
+    // error handler
+    if (error) {
+      return new Response(JSON.stringify({}), {
+        headers: { "Content-Type": "application/json" },
+        status: 409,
+      });
+    }
+
+    // success response
+    if (data) {
+      return new Response(JSON.stringify(data), {
+        headers: { "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+  }
+
+  if (req.method === "PATCH") {
+    const { name } = await req.json();
+
+    const { data, error } = await supabase
+      .from("networks")
+      .update({ name })
+      .eq("id", id)
+      .select(selectQuery)
+      .single();
 
     // error handler
     if (error) {
