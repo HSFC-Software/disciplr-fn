@@ -52,6 +52,37 @@ serve(async (req) => {
     }
   }
 
+  const unlinkDisciplePattern = new URLPattern({
+    pathname: "/unlink/disciple/:id",
+  });
+  const unlineDiscipleMatchingPath = unlinkDisciplePattern.exec(req.url);
+
+  const id = unlineDiscipleMatchingPath
+    ? unlineDiscipleMatchingPath.pathname.groups.id
+    : null;
+
+  if (req.method === "DELETE") {
+    if (id) {
+      const { error, data } = await supabase
+        .from("network_disciples")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.log({ error });
+        return new Response(JSON.stringify({}), {
+          headers: { "Content-Type": "application/json" },
+          status: 409,
+        });
+      }
+
+      return new Response(JSON.stringify({}), {
+        headers: { "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+  }
+
   return new Response(JSON.stringify({}), {
     headers: { "Content-Type": "application/json" },
     status: 404,
