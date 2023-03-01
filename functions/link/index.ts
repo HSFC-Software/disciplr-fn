@@ -73,6 +73,58 @@ serve(async (req) => {
     }
   }
 
+  const disciplePattern = new URLPattern({ pathname: "/link/disciple" });
+  const disciplePatternPath = disciplePattern.exec(req.url);
+
+  if (disciplePatternPath?.pathname?.input === "/link/disciple") {
+    if (req.method === "POST") {
+      const { disciple_id, network_id } = await req.json();
+
+      const { error, data } = await supabase
+        .from("network_disciples")
+        .insert({
+          disciple_id,
+          network_id,
+        })
+        .select(
+          `
+        id,
+        disciple_id(
+          id,
+          first_name,
+          last_name,
+          created_at
+        ),
+        network_id(
+          name,
+          discipler_id(
+            id,
+            first_name,
+            last_name
+          ),
+          created_at
+        )
+        created_at,
+        status
+      `
+        )
+        .single();
+
+      if (error) {
+        console.log(error);
+        return new Response(JSON.stringify({}), {
+          headers: { "Content-Type": "application/json" },
+          status: 409,
+        });
+      }
+
+      return new Response(JSON.stringify(data), {
+        headers: { "Content-Type": "application/json" },
+        status: 201,
+      });
+    }
+  }
+
   const newDisciplePattern = new URLPattern({ pathname: "/link/disciple/new" });
   const newDisciplePatternPath = newDisciplePattern.exec(req.url);
 
