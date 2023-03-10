@@ -67,13 +67,7 @@ serve(async (req) => {
     if (discipler_id) {
       const { error, data: networks } = await supabase
         .from("networks")
-        .select(
-          `
-        id,
-        name,
-        status
-      `
-        )
+        .select(`*`)
         .eq("discipler_id", discipler_id)
         .order("created_at", { ascending: false });
 
