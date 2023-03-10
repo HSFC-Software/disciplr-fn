@@ -8,6 +8,10 @@ import { supabase } from "../_shared/supabase-client.ts";
 import { cors } from "../_shared/cors.ts";
 
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: cors() });
+  }
+
   // For more details on URLPattern, check https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API
   const idPattern = new URLPattern({ pathname: "/profile/:id" });
   const matchingPath = idPattern.exec(req.url);

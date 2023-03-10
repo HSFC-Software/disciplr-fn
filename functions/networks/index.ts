@@ -9,6 +9,10 @@ import { supabase } from "../_shared/supabase-client.ts";
 import { cors } from "../_shared/cors.ts";
 
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: cors() });
+  }
+
   const selectQuery = `
     *,
     discipler_id (
@@ -66,7 +70,8 @@ serve(async (req) => {
         .select(
           `
         id,
-        name
+        name,
+        status
       `
         )
         .eq("discipler_id", discipler_id)
