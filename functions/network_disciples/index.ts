@@ -32,7 +32,7 @@ serve(async (req) => {
         )
       `
       )
-      .eq("disciple_id", id)
+      .eq("network_id", id)
       .order("created_at", { ascending: false });
 
     // error handler
