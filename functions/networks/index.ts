@@ -4,7 +4,9 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { supabase } from "../utils/supabase-client.ts";
+import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
+import { supabase } from "../_shared/supabase-client.ts";
+import { cors } from "../_shared/cors.ts";
 
 serve(async (req) => {
   const selectQuery = `
@@ -32,7 +34,7 @@ serve(async (req) => {
     if (error) {
       console.log(error);
       return new Response(JSON.stringify({}), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 409,
       });
     }
@@ -40,7 +42,7 @@ serve(async (req) => {
     // success response
     if (data) {
       return new Response(JSON.stringify(data), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 200,
       });
     }
@@ -52,6 +54,53 @@ serve(async (req) => {
   const id = matchingPath ? matchingPath.pathname.groups.id : null;
 
   if (req.method === "GET") {
+    const url = new URL(req.url);
+    const discipler_id = url.searchParams.get("discipler");
+
+    /**
+     * Get all networks for a discipler
+     */
+    if (discipler_id) {
+      const { error, data: networks } = await supabase
+        .from("networks")
+        .select(
+          `
+        id,
+        name
+      `
+        )
+        .eq("discipler_id", discipler_id)
+        .order("created_at", { ascending: false });
+
+      // error handler
+      if (error) {
+        console.log(error);
+        return new Response(JSON.stringify({}), {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 409,
+        });
+      }
+
+      const response = await Promise.all(
+        networks.map(async (network) => {
+          const res = await supabase
+            .from("network_disciples")
+            .select("*", { count: "exact", head: true })
+            .eq("network_id", network.id);
+
+          return { ...network, member_count: res.count };
+        })
+      );
+
+      // success response
+      if (response) {
+        return new Response(JSON.stringify(response), {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 200,
+        });
+      }
+    }
+
     const query = supabase.from("networks").select(selectQuery);
 
     if (id) {
@@ -63,14 +112,14 @@ serve(async (req) => {
       // error handler
       if (error) {
         return new Response(JSON.stringify({}), {
-          headers: { "Content-Type": "application/json" },
+          headers: cors({ "Content-Type": "application/json" }),
           status: 409,
         });
       }
 
       // success response
       return new Response(JSON.stringify(data), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
       });
     }
 
@@ -79,7 +128,7 @@ serve(async (req) => {
     // error handler
     if (error) {
       return new Response(JSON.stringify({}), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 409,
       });
     }
@@ -87,7 +136,7 @@ serve(async (req) => {
     // success response
     if (data) {
       return new Response(JSON.stringify(data), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 200,
       });
     }
@@ -106,7 +155,7 @@ serve(async (req) => {
     // error handler
     if (error) {
       return new Response(JSON.stringify({}), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 409,
       });
     }
@@ -114,7 +163,7 @@ serve(async (req) => {
     // success response
     if (data) {
       return new Response(JSON.stringify(data), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 200,
       });
     }
@@ -122,7 +171,7 @@ serve(async (req) => {
 
   // fallback response
   return new Response(JSON.stringify({}), {
-    headers: { "Content-Type": "application/json" },
+    headers: cors({ "Content-Type": "application/json" }),
     status: 404,
   });
 });

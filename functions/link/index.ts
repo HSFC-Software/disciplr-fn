@@ -3,7 +3,7 @@
 // This enables autocomplete, go to definition, etc.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { supabase } from "../utils/supabase-client.ts";
+import { supabase } from "../_shared/supabase-client.ts";
 
 serve(async (req) => {
   // For more details on URLPattern, check https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API

@@ -4,7 +4,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { supabase } from "../utils/supabase-client.ts";
+import { supabase } from "../_shared/supabase-client.ts";
+import { cors } from "../_shared/cors.ts";
 
 serve(async (req) => {
   // For more details on URLPattern, check https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API
@@ -24,7 +25,7 @@ serve(async (req) => {
     const { data, error } = await query;
 
     return new Response(JSON.stringify(data), {
-      headers: { "Content-Type": "application/json" },
+      headers: cors({ "Content-Type": "application/json" }),
     });
   }
 
@@ -36,12 +37,12 @@ serve(async (req) => {
     const { data, error } = await query;
 
     return new Response(JSON.stringify(data), {
-      headers: { "Content-Type": "application/json" },
+      headers: cors({ "Content-Type": "application/json" }),
     });
   }
 
   return new Response(JSON.stringify({}), {
-    headers: { "Content-Type": "application/json" },
+    headers: cors({ "Content-Type": "application/json" }),
     status: 404,
   });
 });
