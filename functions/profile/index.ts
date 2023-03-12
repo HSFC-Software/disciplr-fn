@@ -33,6 +33,31 @@ serve(async (req) => {
     });
   }
 
+  if (params.q) {
+    const results = [];
+
+    await Promise.all(
+      params.q.split(" ").map(async (keyword) => {
+        const { data } = await supabase
+          .from("disciples")
+          .select("id, first_name, last_name")
+          .or(`first_name.ilike.%${keyword}%,last_name.ilike.%${keyword}%`);
+        if (data) {
+          data?.forEach((result) => {
+            // remove duplicates in the list
+            if (!JSON.stringify(results).includes(result.id)) {
+              results.push(result);
+            }
+          });
+        }
+      })
+    );
+
+    return new Response(JSON.stringify(results), {
+      headers: cors({ "Content-Type": "application/json" }),
+    });
+  }
+
   if (id) {
     const query = supabase.from("disciples").select("*");
     query.eq("id", id);
