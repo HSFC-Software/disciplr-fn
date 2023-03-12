@@ -33,7 +33,7 @@ serve(async (req) => {
     });
   }
 
-  if (params.q) {
+  if (params.q || params.q === "") {
     const results = [];
 
     await Promise.all(
