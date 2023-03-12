@@ -4,6 +4,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { supabase } from "../_shared/supabase-client.ts";
+import { cors } from "../_shared/cors.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,7 +32,7 @@ serve(async (req) => {
       if (error) {
         console.log({ error });
         return new Response(JSON.stringify({}), {
-          headers: { "Content-Type": "application/json" },
+          headers: cors({ "Content-Type": "application/json" }),
           status: 409,
         });
       }
@@ -65,13 +66,13 @@ serve(async (req) => {
         console.log({ networkError });
         await supabase.from("networks").delete().eq("id", data.id);
         return new Response(JSON.stringify({}), {
-          headers: { "Content-Type": "application/json" },
+          headers: cors({ "Content-Type": "application/json" }),
           status: 409,
         });
       }
 
       return new Response(JSON.stringify(network), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 201,
       });
     }
@@ -117,13 +118,13 @@ serve(async (req) => {
       if (error) {
         console.log(error);
         return new Response(JSON.stringify({}), {
-          headers: { "Content-Type": "application/json" },
+          headers: cors({ "Content-Type": "application/json" }),
           status: 409,
         });
       }
 
       return new Response(JSON.stringify(data), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 201,
       });
     }
@@ -150,7 +151,7 @@ serve(async (req) => {
 
     if (error) {
       return new Response(JSON.stringify({}), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 409,
       });
     }
@@ -185,19 +186,19 @@ serve(async (req) => {
       await supabase.from("disciples").delete().eq("id", disciple.id);
 
       return new Response(JSON.stringify({}), {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
         status: 409,
       });
     }
 
     return new Response(JSON.stringify(linkData), {
       status: 201,
-      headers: { "Content-Type": "application/json" },
+      headers: cors({ "Content-Type": "application/json" }),
     });
   }
 
   return new Response(JSON.stringify({}), {
-    headers: { "Content-Type": "application/json" },
+    headers: cors({ "Content-Type": "application/json" }),
     status: 404,
   });
 });
