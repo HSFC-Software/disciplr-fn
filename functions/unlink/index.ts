@@ -7,6 +7,10 @@ import { supabase } from "../_shared/supabase-client.ts";
 import { cors } from "../_shared/cors.ts";
 
 serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: cors() });
+  }
+
   const disciplePattern = new URLPattern({
     pathname: "/unlink/disciple/inactive",
   });
@@ -75,7 +79,37 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({}), {
+      return new Response(JSON.stringify({ id }), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 200,
+      });
+    }
+  }
+
+  const networkPattern = new URLPattern({
+    pathname: "/unlink/network/inactive",
+  });
+  const networkMatchingPath = networkPattern.exec(req.url);
+
+  if (req.method === "PATCH") {
+    if (networkMatchingPath?.pathname?.input === "/unlink/network/inactive") {
+      const { id } = await req.json();
+
+      const { error, data } = await supabase
+        .from("networks")
+        .update({ status: "Inactive" })
+        .eq("id", id)
+        .select(`*`);
+
+      if (error) {
+        console.log({ error });
+        return new Response(JSON.stringify({}), {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 409,
+        });
+      }
+
+      return new Response(JSON.stringify(data), {
         headers: cors({ "Content-Type": "application/json" }),
         status: 200,
       });
