@@ -67,10 +67,23 @@ serve(async (req) => {
 
   if (req.method === "DELETE") {
     if (id) {
+      const { data: networkData } = await supabase
+        .from("network_disciples")
+        .select("network_id")
+        .eq("id", id)
+        .single();
+
       const { error, data } = await supabase
         .from("network_disciples")
         .delete()
         .eq("id", id);
+
+      // get main network id
+      const { data: network } = await supabase
+        .from("network_networks")
+        .select("main_network_id")
+        .eq("networks_id", networkData?.network_id ?? "")
+        .single();
 
       if (error) {
         log("Error removing disciple", req.url, error);
@@ -80,10 +93,16 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify({ id }), {
-        headers: cors({ "Content-Type": "application/json" }),
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({
+          id,
+          main_network_id: network?.main_network_id ?? null,
+        }),
+        {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 200,
+        }
+      );
     }
   }
 
