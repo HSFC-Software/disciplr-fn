@@ -1,0 +1,12 @@
+{
+  "name": "supabase",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/HSFC-Software/disciplr-fn.git",
+  "author": "Sam Tagalog <98756288+samtags@users.noreply.github.com>",
+  "license": "MIT",
+  "scripts": {
+    "deploy": "node deploy.js",
+    "dev": "supabase functions serve"
+  }
+}
