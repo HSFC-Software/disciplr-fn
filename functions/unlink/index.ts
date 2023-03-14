@@ -99,7 +99,8 @@ serve(async (req) => {
         .from("networks")
         .update({ status: "Inactive" })
         .eq("id", id)
-        .select(`*`);
+        .select(`*`)
+        .single();
 
       if (error) {
         console.log({ error });
@@ -109,10 +110,22 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify(data), {
-        headers: cors({ "Content-Type": "application/json" }),
-        status: 200,
-      });
+      const { data: network_networks } = await supabase
+        .from("network_networks")
+        .select(`main_network_id`)
+        .eq("networks_id", id)
+        .single();
+
+      return new Response(
+        JSON.stringify({
+          ...(data ?? {}),
+          main_network_id: network_networks?.main_network_id ?? "",
+        }),
+        {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 200,
+        }
+      );
     }
   }
 

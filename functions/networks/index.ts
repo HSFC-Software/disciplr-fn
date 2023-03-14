@@ -100,27 +100,46 @@ serve(async (req) => {
       }
     }
 
-    const query = supabase.from("networks").select(selectQuery);
-
     if (id) {
-      query.eq("id", id);
+      // many to one relationship
+      const query = supabase.from("network_networks").select(`
+        *,
+        networks!network_networks_networks_id_fkey(
+          *,
+          discipler_id (
+            id,
+            first_name,
+            last_name
+          )
+        )
+      `);
+
+      query.eq("networks_id", id);
       query.single();
 
       const { error, data } = await query;
 
       // error handler
       if (error) {
+        console.log(error);
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
           status: 409,
         });
       }
 
+      const response = {
+        main_network_id: data.main_network_id,
+        ...(data.networks ?? {}),
+      };
+
       // success response
-      return new Response(JSON.stringify(data), {
+      return new Response(JSON.stringify(response), {
         headers: cors({ "Content-Type": "application/json" }),
       });
     }
+
+    const query = supabase.from("networks").select(selectQuery);
 
     const { data, error } = await query;
 
@@ -151,8 +170,18 @@ serve(async (req) => {
       .select(selectQuery)
       .single();
 
+    const { data: network_networks_, error: networkError } = await supabase
+      .from("network_networks")
+      .select(`main_network_id`)
+      .eq("networks_id", id)
+      .single();
+
     // error handler
-    if (error) {
+    if (error || networkError) {
+      console.log({
+        error,
+        networkError,
+      });
       return new Response(JSON.stringify({}), {
         headers: cors({ "Content-Type": "application/json" }),
         status: 409,
@@ -161,10 +190,16 @@ serve(async (req) => {
 
     // success response
     if (data) {
-      return new Response(JSON.stringify(data), {
-        headers: cors({ "Content-Type": "application/json" }),
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({
+          ...(data ?? {}),
+          main_network_id: network_networks_.main_network_id,
+        }),
+        {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 200,
+        }
+      );
     }
   }
 
