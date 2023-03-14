@@ -127,7 +127,8 @@ serve(async (req) => {
         const { error: networkError, data: networkData } = await supabase
           .from("networks")
           .select(selectQuery)
-          .eq("id", id);
+          .eq("id", id)
+          .single();
 
         if (networkError) {
           log("Error getting network", req.url, error, networkError);
