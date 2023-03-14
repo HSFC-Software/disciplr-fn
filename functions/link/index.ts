@@ -124,10 +124,22 @@ serve(async (req) => {
         });
       }
 
-      return new Response(JSON.stringify(data), {
-        headers: cors({ "Content-Type": "application/json" }),
-        status: 201,
-      });
+      const { data: network_networks } = await subapase
+        .select(`main_network_id`)
+        .from("network_networks")
+        .eq("networks_id", network_id)
+        .single();
+
+      return new Response(
+        JSON.stringify({
+          ...(data ?? {}),
+          main_network_id: network_networks?.main_network_id ?? null,
+        }),
+        {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 201,
+        }
+      );
     }
   }
 
