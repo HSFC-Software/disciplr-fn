@@ -161,26 +161,26 @@ serve(async (req) => {
       });
     }
 
-    const query = supabase.from("networks").select(selectQuery);
+    // const query = supabase.from("networks").select(selectQuery);
 
-    const { data, error } = await query;
+    // const { data, error } = await query;
 
-    // error handler
-    if (error) {
-      log("Error getting networks", req.url, error);
-      return new Response(JSON.stringify({}), {
-        headers: cors({ "Content-Type": "application/json" }),
-        status: 409,
-      });
-    }
+    // // error handler
+    // if (error) {
+    //   log("Error getting networks", req.url, error);
+    //   return new Response(JSON.stringify({}), {
+    //     headers: cors({ "Content-Type": "application/json" }),
+    //     status: 409,
+    //   });
+    // }
 
-    // success response
-    if (data) {
-      return new Response(JSON.stringify(data), {
-        headers: cors({ "Content-Type": "application/json" }),
-        status: 200,
-      });
-    }
+    // // success response
+    // if (data) {
+    //   return new Response(JSON.stringify(data), {
+    //     headers: cors({ "Content-Type": "application/json" }),
+    //     status: 200,
+    //   });
+    // }
   }
 
   if (req.method === "PATCH") {
