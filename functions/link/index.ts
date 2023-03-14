@@ -124,15 +124,19 @@ serve(async (req) => {
         });
       }
 
-      const { data: network_networks } = await subapase
-        .select(`main_network_id`)
+      const { data: network_networks, error: networkError } = await supabase
         .from("network_networks")
+        .select("*")
         .eq("networks_id", network_id)
         .single();
 
+      if (networkError) {
+        log("Error main network", req.url, networkError);
+      }
+
       return new Response(
         JSON.stringify({
-          ...(data ?? {}),
+          ...data,
           main_network_id: network_networks?.main_network_id ?? null,
         }),
         {
