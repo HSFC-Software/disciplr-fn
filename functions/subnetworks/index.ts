@@ -43,7 +43,8 @@ serve(async (req) => {
         const res = await supabase
           .from("network_disciples")
           .select("*", { count: "exact", head: true })
-          .eq("network_id", network.networks_id.id);
+          .eq("network_id", network.networks_id.id)
+          .eq("status", "Active");
 
         return { ...network, member_count: res.count };
       })

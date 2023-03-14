@@ -122,6 +122,11 @@ serve(async (req) => {
         .select(`*`)
         .single();
 
+      await supabase
+        .from("network_networks")
+        .update({ status: "Inactive" })
+        .eq("networks_id", id);
+
       if (error) {
         log("Error unlinking network", req.url, error);
         return new Response(JSON.stringify({}), {

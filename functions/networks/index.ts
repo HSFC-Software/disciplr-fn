@@ -86,7 +86,8 @@ serve(async (req) => {
           const res = await supabase
             .from("network_disciples")
             .select("*", { count: "exact", head: true })
-            .eq("network_id", network.id);
+            .eq("network_id", network.id)
+            .eq("status", "Active");
 
           return { ...network, member_count: res.count };
         })
@@ -184,23 +185,27 @@ serve(async (req) => {
 
   if (req.method === "PATCH") {
     const { name, status } = await req.json();
+    let payload = {};
+
+    if (name) payload.name = name;
+    if (status) payload.status = status;
 
     const { data, error } = await supabase
       .from("networks")
-      .update({ name, status })
+      .update(payload)
       .eq("id", id)
       .select(selectQuery)
       .single();
 
-    const { data: network_networks_, error: networkError } = await supabase
+    const { data: network_networks } = await supabase
       .from("network_networks")
       .select(`main_network_id`)
       .eq("networks_id", id)
       .single();
 
     // error handler
-    if (error || networkError) {
-      log("Error updating network", req.url, error, networkError);
+    if (error) {
+      log("Error updating network", req.url, error);
       return new Response(JSON.stringify({}), {
         headers: cors({ "Content-Type": "application/json" }),
         status: 409,
@@ -212,7 +217,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           ...(data ?? {}),
-          main_network_id: network_networks_.main_network_id,
+          main_network_id: network_networks?.main_network_id,
         }),
         {
           headers: cors({ "Content-Type": "application/json" }),
