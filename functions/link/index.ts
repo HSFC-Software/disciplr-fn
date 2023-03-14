@@ -185,6 +185,7 @@ serve(async (req) => {
       .single();
 
     if (linkError) {
+      log("Error linking disciple", req.url, linkError);
       await supabase.from("disciples").delete().eq("id", disciple.id);
 
       return new Response(JSON.stringify({}), {
