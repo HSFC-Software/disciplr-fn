@@ -5,6 +5,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { supabase } from "../_shared/supabase-client.ts";
 import { cors } from "../_shared/cors.ts";
+import log from "../_shared/log.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -30,7 +31,7 @@ serve(async (req) => {
         .single();
 
       if (error) {
-        console.log({ error });
+        log("Error creating network", req.url, error);
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
           status: 409,
@@ -63,7 +64,7 @@ serve(async (req) => {
         .single();
 
       if (networkError) {
-        console.log({ networkError });
+        log("Error linking network", req.url, networkError);
         await supabase.from("networks").delete().eq("id", data.id);
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
@@ -116,7 +117,7 @@ serve(async (req) => {
         .single();
 
       if (error) {
-        console.log(error);
+        log("Error linking disciple", req.url, error);
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
           status: 409,
@@ -150,6 +151,7 @@ serve(async (req) => {
       .single();
 
     if (error) {
+      log("Error creating disciple", req.url, error);
       return new Response(JSON.stringify({}), {
         headers: cors({ "Content-Type": "application/json" }),
         status: 409,

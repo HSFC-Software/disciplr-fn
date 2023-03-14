@@ -3,8 +3,7 @@
 // This enables autocomplete, go to definition, etc.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-console.log("Hello from Functions!");
+import log from "../_shared/log.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -14,6 +13,8 @@ serve(async (req) => {
   const data = {
     message: `Hellow`,
   };
+
+  log("Hello from Functions!", req.url, { data });
 
   return new Response(JSON.stringify(data), {
     headers: { "Content-Type": "application/json" },

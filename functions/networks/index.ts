@@ -7,6 +7,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
 import { supabase } from "../_shared/supabase-client.ts";
 import { cors } from "../_shared/cors.ts";
+import log from "../_shared/log.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -36,7 +37,7 @@ serve(async (req) => {
 
     // error handler
     if (error) {
-      console.log(error);
+      log("Error creating network", req.url, error);
       return new Response(JSON.stringify({}), {
         headers: cors({ "Content-Type": "application/json" }),
         status: 409,
@@ -73,7 +74,7 @@ serve(async (req) => {
 
       // error handler
       if (error) {
-        console.log(error);
+        log("Error getting networks", req.url, error);
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
           status: 409,
@@ -121,7 +122,7 @@ serve(async (req) => {
 
       // error handler
       if (error) {
-        console.log(error);
+        log("Error getting network", req.url, error);
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
           status: 409,
@@ -145,6 +146,7 @@ serve(async (req) => {
 
     // error handler
     if (error) {
+      log("Error getting networks", req.url, error);
       return new Response(JSON.stringify({}), {
         headers: cors({ "Content-Type": "application/json" }),
         status: 409,
@@ -178,10 +180,7 @@ serve(async (req) => {
 
     // error handler
     if (error || networkError) {
-      console.log({
-        error,
-        networkError,
-      });
+      log("Error updating network", req.url, error, networkError);
       return new Response(JSON.stringify({}), {
         headers: cors({ "Content-Type": "application/json" }),
         status: 409,

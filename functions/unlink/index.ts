@@ -5,6 +5,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { supabase } from "../_shared/supabase-client.ts";
 import { cors } from "../_shared/cors.ts";
+import log from "../_shared/log.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -41,7 +42,7 @@ serve(async (req) => {
         .single();
 
       if (error) {
-        console.log({ error });
+        log("Error unlinking disciple", req.url, error);
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
           status: 409,
@@ -72,7 +73,7 @@ serve(async (req) => {
         .eq("id", id);
 
       if (error) {
-        console.log({ error });
+        log("Error removing disciple", req.url, error);
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
           status: 409,
@@ -103,7 +104,7 @@ serve(async (req) => {
         .single();
 
       if (error) {
-        console.log({ error });
+        log("Error unlinking network", req.url, error);
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
           status: 409,
