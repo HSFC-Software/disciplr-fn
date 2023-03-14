@@ -38,7 +38,18 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify(data), {
+    const response = await Promise.all(
+      data.map(async (network) => {
+        const res = await supabase
+          .from("network_disciples")
+          .select("*", { count: "exact", head: true })
+          .eq("network_id", network.networks_id.id);
+
+        return { ...network, member_count: res.count };
+      })
+    );
+
+    return new Response(JSON.stringify(response), {
       headers: cors({ "Content-Type": "application/json" }),
     });
   }
