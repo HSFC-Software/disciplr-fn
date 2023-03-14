@@ -122,11 +122,30 @@ serve(async (req) => {
 
       // error handler
       if (error) {
-        log("Error getting network", req.url, error);
-        return new Response(JSON.stringify({}), {
-          headers: cors({ "Content-Type": "application/json" }),
-          status: 409,
-        });
+        log("No sub-network found", req.url, error);
+
+        const { error: networkError, data: networkData } = await supabase
+          .from("networks")
+          .select(selectQuery)
+          .eq("id", id);
+
+        if (networkError) {
+          log("Error getting network", req.url, error, networkError);
+          return new Response(JSON.stringify({}), {
+            headers: cors({ "Content-Type": "application/json" }),
+            status: 409,
+          });
+        }
+
+        return new Response(
+          JSON.stringify({
+            ...networkData,
+            main_network_id: null,
+          }),
+          {
+            headers: cors({ "Content-Type": "application/json" }),
+          }
+        );
       }
 
       const response = {
