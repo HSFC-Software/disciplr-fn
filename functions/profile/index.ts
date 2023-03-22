@@ -12,6 +12,33 @@ serve(async (req) => {
     return new Response("ok", { headers: cors() });
   }
 
+  if (req.method === "POST") {
+    // create profile
+    const { first_name, last_name, email } = await req.json();
+
+    const { data, error } = await supabase
+      .from("disciples")
+      .insert({
+        first_name,
+        last_name,
+        email,
+      })
+      .select("id, first_name, last_name, email")
+      .single();
+
+    if (error) {
+      console.log(error);
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
+
+    return new Response(JSON.stringify(data), {
+      headers: cors({ "Content-Type": "application/json" }),
+    });
+  }
+
   // For more details on URLPattern, check https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API
   const idPattern = new URLPattern({ pathname: "/profile/:id" });
   const matchingPath = idPattern.exec(req.url);
