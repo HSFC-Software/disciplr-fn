@@ -86,6 +86,27 @@ serve(async (req) => {
     if (req.method === "POST") {
       const { disciple_id, network_id } = await req.json();
 
+      // checks if data is existing in network_disciples table
+      const { data: existing, setExisting } = await supabase
+        .from("network_disciples")
+        .select("*")
+        .eq("network_id", network_id)
+        .eq("disciple_id", disciple_id)
+        .single();
+
+      if (existing) {
+        // update the status to active instead
+        await supabase
+          .from("network_disciples")
+          .update({ status: "Active" })
+          .eq("id", existing.id);
+
+        return new Response(JSON.stringify({ ...existing, status: "Active" }), {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 200,
+        });
+      }
+
       const { error, data } = await supabase
         .from("network_disciples")
         .insert({
