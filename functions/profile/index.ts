@@ -46,6 +46,57 @@ serve(async (req) => {
 
   const id = matchingPath ? matchingPath.pathname.groups.id : null;
 
+  if (req.method === "PATCH") {
+    if (!id) {
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 404,
+      });
+    }
+
+    // update profile
+    const body = await req.json();
+
+    const payload = {};
+
+    const allowedFields = [
+      "first_name",
+      "last_name",
+      "middle_name",
+      "email",
+      "address",
+      "contact_number",
+      "birthday",
+      "sex",
+      "status",
+    ];
+
+    allowedFields.forEach((field) => {
+      if (body[field]) payload[field] = body[field];
+    });
+
+    const { data, error } = await supabase
+      .from("disciples")
+      .update(payload)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) {
+      console.log(error);
+      log("Error updating profile", req.url, error);
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
+
+    return new Response(JSON.stringify(data), {
+      headers: cors({ "Content-Type": "application/json" }),
+      status: 200,
+    });
+  }
+
   const url = new URL(req.url);
   const params = Object.fromEntries(new URLSearchParams(url.search));
 
