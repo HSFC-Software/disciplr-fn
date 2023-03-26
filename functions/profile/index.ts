@@ -6,6 +6,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { supabase } from "../_shared/supabase-client.ts";
 import { cors } from "../_shared/cors.ts";
+import log from "../_shared/log.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -63,22 +64,26 @@ serve(async (req) => {
   if (params.q || params.q === "") {
     const results = [];
 
-    await Promise.all(
-      params.q.split(" ").map(async (keyword) => {
-        const { data } = await supabase
-          .from("disciples")
-          .select("id, first_name, last_name")
-          .or(`first_name.ilike.%${keyword}%,last_name.ilike.%${keyword}%`);
-        if (data) {
-          data?.forEach((result) => {
-            // remove duplicates in the list
-            if (!JSON.stringify(results).includes(result.id)) {
-              results.push(result);
-            }
-          });
-        }
-      })
-    );
+    try {
+      await Promise.all(
+        params.q.split(" ").map(async (keyword) => {
+          const { data } = await supabase
+            .from("disciples")
+            .select("id, first_name, last_name")
+            .or(`first_name.ilike.%${keyword}%,last_name.ilike.%${keyword}%`);
+          if (data) {
+            data?.forEach((result) => {
+              // remove duplicates in the list
+              if (!JSON.stringify(results).includes(result.id)) {
+                results.push(result);
+              }
+            });
+          }
+        })
+      );
+    } catch (error) {
+      log("Error getting profiles", req.url, error);
+    }
 
     return new Response(JSON.stringify(results), {
       headers: cors({ "Content-Type": "application/json" }),
