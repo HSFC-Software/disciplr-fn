@@ -96,7 +96,8 @@ serve(async (req) => {
         `
         id,
         first_name,
-        last_name
+        last_name,
+        email
       `
       )
       .eq("id", params.disciple)

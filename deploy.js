@@ -9,7 +9,7 @@ const getDirectories = (source) =>
 
 const ignore = ["_shared"];
 
-getDirectories("./functions").forEach((fn) => {
+getDirectories("./supabase/functions").forEach((fn) => {
   if (!ignore.includes(fn)) {
     execSync(
       `supabase functions deploy ${fn} --project-ref bsnrwmmolcbhgncwogox`,
