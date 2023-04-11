@@ -198,7 +198,8 @@ serve(async (req) => {
         ),
         lesson_code (
           code,
-          name
+          name,
+          title
         ),
         created_at
       `
