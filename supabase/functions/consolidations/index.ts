@@ -33,7 +33,9 @@ serve(async (req) => {
     }
 
     const lesson_code = data?.lesson_code ?? "L0";
-    const nextLessonCode = `L${Number(lesson_code.split("L")[1]) + 1}`;
+    let nextLessonCode = `L${Number(lesson_code.split("L")[1]) + 1}`;
+
+    if (nextLessonCode === "L11") nextLessonCode = nextLessonCode = "L1"; // fallback
 
     // create the next consolidation lesson
     const { data: newLesson, error: newError } = await supabase
@@ -174,6 +176,45 @@ serve(async (req) => {
     };
 
     return new Response(JSON.stringify(response), {
+      headers: cors({ "Content-Type": "application/json" }),
+    });
+  }
+
+  if (params.id) {
+    let { data, error } = await supabase
+      .from("consolidations")
+      .select(
+        `
+        id,
+        disciple_id (
+          id,
+          first_name,
+          last_name
+        ),
+        consolidator_id (
+          id,
+          first_name,
+          last_name
+        ),
+        lesson_code (
+          code,
+          name
+        ),
+        created_at
+      `
+      )
+      .eq("id", params.id)
+      .single();
+
+    if (error) {
+      log("Get consolidation by id failed", req.url, { error });
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
+
+    return new Response(JSON.stringify(data), {
       headers: cors({ "Content-Type": "application/json" }),
     });
   }
