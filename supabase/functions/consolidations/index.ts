@@ -12,6 +12,62 @@ serve(async (req) => {
     return new Response("ok", { headers: cors() });
   }
 
+  if (req.method === "POST") {
+    const { disciple_id, consolidator_id } = await req.json();
+
+    // get recent consolidation
+    const { data, error } = await supabase
+      .from("consolidations")
+      .select(`lesson_code`)
+      .eq("disciple_id", disciple_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      log("[POST]: Find recent consolidation failed", req.url, { error });
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
+
+    const lesson_code = data?.lesson_code ?? "L0";
+    const nextLessonCode = `L${Number(lesson_code.split("L")[1]) + 1}`;
+
+    // create the next consolidation lesson
+    const { data: newLesson, error: newError } = await supabase
+      .from("consolidations")
+      .insert({
+        disciple_id,
+        consolidator_id,
+        lesson_code: nextLessonCode,
+      })
+      .select(
+        `
+        id,
+        lesson_code (
+          code,
+          name
+        )
+      `
+      )
+      .single();
+
+    if (newError) {
+      log("[POST]: Create new consolidation failed", req.url, { newError });
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
+
+    return new Response(JSON.stringify(newLesson), {
+      headers: cors({ "Content-Type": "application/json" }),
+      status: 201,
+    });
+  }
+
   const url = new URL(req.url);
   const params = Object.fromEntries(new URLSearchParams(url.search));
 
