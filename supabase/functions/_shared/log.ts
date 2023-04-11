@@ -5,6 +5,11 @@ export default async function log(
   pathname: string,
   payload: unknown
 ) {
+  console.log({
+    message,
+    pathname,
+    payload,
+  });
   const { data, error } = await supabase.from("logs").insert([
     {
       message,

@@ -14,6 +14,8 @@ serve(async (req) => {
     message: `Hellow`,
   };
 
+  console.log(Deno.env.get("SUPABASE_DB_URL"));
+
   log("Hello from Functions!", req.url, { data });
 
   return new Response(JSON.stringify(data), {

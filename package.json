@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "deploy": "node deploy.js",
-    "dev": "supabase functions serve"
+    "dev": "supabase functions serve",
+    "setup": "supabase init && supabase start"
   }
 }
