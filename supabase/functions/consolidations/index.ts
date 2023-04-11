@@ -74,6 +74,53 @@ serve(async (req) => {
     });
   }
 
+  if (params.disciple) {
+    let { data: history, error } = await supabase
+      .from("consolidations")
+      .select(
+        `
+        id,
+        lesson_code (
+          code,
+          name
+        ),
+        created_at
+      `
+      )
+      .eq("disciple_id", params.disciple)
+      .order("created_at", { ascending: false });
+
+    const { data: disciple } = await supabase
+      .from("disciples")
+      .select(
+        `
+        id,
+        first_name,
+        last_name
+      `
+      )
+      .eq("id", params.disciple)
+      .single();
+
+    if (error) {
+      log("Get consolidation by disciple failed", req.url, { error });
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
+
+    const response = {
+      recent: history?.[0] || {},
+      disciple,
+      history,
+    };
+
+    return new Response(JSON.stringify(response), {
+      headers: cors({ "Content-Type": "application/json" }),
+    });
+  }
+
   return new Response(JSON.stringify({}), {
     headers: cors({ "Content-Type": "application/json" }),
     status: 404,
