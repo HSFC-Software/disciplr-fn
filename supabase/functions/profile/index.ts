@@ -15,7 +15,7 @@ serve(async (req) => {
 
   if (req.method === "POST") {
     // create profile
-    const { first_name, last_name, email } = await req.json();
+    const { first_name, last_name, email, isVip } = await req.json();
 
     const { data, error } = await supabase
       .from("disciples")
@@ -33,6 +33,20 @@ serve(async (req) => {
         headers: cors({ "Content-Type": "application/json" }),
         status: 409,
       });
+    }
+
+    if (isVip === true) {
+      const { error: vipError } = await supabase.from("vips").insert({
+        disciple_id: data.id,
+      });
+
+      if (vipError) {
+        console.log(vipError);
+        log("Error creating VIP", req.url, vipError);
+
+        // revert the disciple creation
+        await supabase.from("disciples").delete().eq("id", data.id);
+      }
     }
 
     return new Response(JSON.stringify(data), {
