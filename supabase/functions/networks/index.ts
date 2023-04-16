@@ -37,11 +37,32 @@ serve(async (req) => {
       if (error) {
         console.log(error);
         log("Error deleting network", req.url, error);
+
         return new Response(JSON.stringify({}), {
           headers: cors({ "Content-Type": "application/json" }),
           status: 409,
         });
       }
+
+      let response: any = {};
+
+      // get parent network id
+      const { data: parentNetwork } = await supabase
+        .from("network_networks")
+        .select("main_network_id")
+        .eq("networks_id", id)
+        .single();
+
+      if (!!parentNetwork) {
+        response.parent = {
+          id: parentNetwork.main_network_id,
+        };
+      }
+
+      return new Response(JSON.stringify(response), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 200,
+      });
     }
 
     return new Response(JSON.stringify({}), {
