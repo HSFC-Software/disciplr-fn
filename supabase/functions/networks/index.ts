@@ -23,6 +23,33 @@ serve(async (req) => {
     ) 
   `;
 
+  if (req.method === "DELETE") {
+    const idPattern = new URLPattern({ pathname: "/networks/:id" });
+    const matchingPath = idPattern.exec(req.url);
+    const id = matchingPath ? matchingPath.pathname.groups.id : null;
+
+    if (id) {
+      const { error } = await supabase
+        .from("networks")
+        .update({ is_deleted: true })
+        .eq("id", id);
+
+      if (error) {
+        console.log(error);
+        log("Error deleting network", req.url, error);
+        return new Response(JSON.stringify({}), {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 409,
+        });
+      }
+    }
+
+    return new Response(JSON.stringify({}), {
+      headers: cors({ "Content-Type": "application/json" }),
+      status: 200,
+    });
+  }
+
   if (req.method === "POST") {
     const { name, discipler_id } = await req.json();
 
@@ -70,6 +97,7 @@ serve(async (req) => {
         .from("networks")
         .select(`*`)
         .eq("discipler_id", discipler_id)
+        .eq("is_deleted", false)
         .order("created_at", { ascending: false });
 
       // error handler

@@ -38,7 +38,7 @@ serve(async (req) => {
       });
     }
 
-    const response = await Promise.all(
+    let response = await Promise.all(
       data.map(async (network) => {
         const res = await supabase
           .from("network_disciples")
@@ -49,6 +49,8 @@ serve(async (req) => {
         return { ...network, member_count: res.count };
       })
     );
+
+    response = response.filter((network) => !network.networks_id.is_deleted);
 
     return new Response(JSON.stringify(response), {
       headers: cors({ "Content-Type": "application/json" }),
