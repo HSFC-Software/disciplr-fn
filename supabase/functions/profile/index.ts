@@ -87,6 +87,7 @@ serve(async (req) => {
 
     allowedFields.forEach((field) => {
       if (body[field]) payload[field] = body[field];
+      if (body[field] === "") payload[field] = body[field];
     });
 
     const { data, error } = await supabase
@@ -120,6 +121,8 @@ serve(async (req) => {
     query.single();
 
     const { data, error } = await query;
+
+    console.log(params.email, error);
 
     return new Response(JSON.stringify(data), {
       headers: cors({ "Content-Type": "application/json" }),
@@ -156,6 +159,9 @@ serve(async (req) => {
   }
 
   if (id) {
+    // TODO: checks if the requester is the leader of the disciple
+    // if not return 451
+
     const query = supabase.from("disciples").select("*");
     query.eq("id", id);
     query.single();
