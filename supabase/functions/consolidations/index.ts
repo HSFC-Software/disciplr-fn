@@ -88,7 +88,8 @@ serve(async (req) => {
           code,
           name
         ),
-        created_at
+        created_at,
+        status
       `
       )
       .eq("consolidator_id", params.consolidator);
@@ -142,7 +143,8 @@ serve(async (req) => {
           code,
           name
         ),
-        created_at
+        created_at,
+        status
       `
       )
       .eq("disciple_id", params.disciple)
