@@ -28,7 +28,7 @@ serve(async (req) => {
       .single();
 
     if (error) {
-      console.log(error);
+      log("Error creating profile", req.url, error);
       return new Response(JSON.stringify({}), {
         headers: cors({ "Content-Type": "application/json" }),
         status: 409,
