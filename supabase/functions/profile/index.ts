@@ -83,6 +83,7 @@ serve(async (req) => {
       "birthday",
       "sex",
       "status",
+      "img_url",
     ];
 
     allowedFields.forEach((field) => {

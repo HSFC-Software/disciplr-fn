@@ -73,6 +73,31 @@ serve(async (req) => {
   const url = new URL(req.url);
   const params = Object.fromEntries(new URLSearchParams(url.search));
 
+  if (req.method === "PATCH") {
+    const id = params.id;
+    const { status } = await req.json();
+
+    const { data, error } = await supabase
+      .from("consolidations")
+      .update({ status })
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) {
+      log("[PATCH]: Update consolidation failed", req.url, { error });
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
+
+    return new Response(JSON.stringify(data), {
+      headers: cors({ "Content-Type": "application/json" }),
+      status: 200,
+    });
+  }
+
   if (params.consolidator) {
     let { data, error } = await supabase
       .from("consolidations")
@@ -203,7 +228,8 @@ serve(async (req) => {
           name,
           title
         ),
-        created_at
+        created_at,
+        status
       `
       )
       .eq("id", params.id)

@@ -28,7 +28,8 @@ serve(async (req) => {
           first_name,
           last_name,
           sex,
-          created_at
+          created_at,
+          img_url
         )
       `
       )
