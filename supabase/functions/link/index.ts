@@ -173,13 +173,15 @@ serve(async (req) => {
 
   // link/unlink network disciple
   if (newDisciplePatternPath?.pathname?.input === "/link/disciple/new") {
-    const { first_name, last_name, middle_name, network_id } = await req.json();
+    const { first_name, last_name, middle_name, network_id, contact_number } =
+      await req.json();
 
     const disciplePayload = {};
 
     if (first_name) disciplePayload.first_name = first_name;
     if (last_name) disciplePayload.last_name = last_name;
     if (middle_name) disciplePayload.middle_name = middle_name;
+    if (contact_number) disciplePayload.contact_number = contact_number;
 
     const { error, data: disciple } = await supabase
       .from("disciples")
