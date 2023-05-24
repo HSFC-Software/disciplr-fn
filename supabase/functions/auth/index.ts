@@ -103,7 +103,7 @@ serve(async (req) => {
         token: jwt,
       }),
       {
-        headers: { "Content-Type": "application/json" },
+        headers: cors({ "Content-Type": "application/json" }),
       }
     );
   } else {
