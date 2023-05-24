@@ -6,6 +6,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { decode, create } from "https://deno.land/x/djwt@v2.8/mod.ts";
 import log from "../_shared/log.ts";
 import { supabase } from "../_shared/supabase-client.ts";
+import { cors } from "../_shared/cors.ts";
 
 const key = await crypto.subtle.generateKey(
   { name: "HMAC", hash: "SHA-512" },
