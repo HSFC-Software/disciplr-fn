@@ -6,6 +6,16 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import log from "../_shared/log.ts";
 import { supabase } from "../_shared/supabase-client.ts";
 import { cors } from "../_shared/cors.ts";
+import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
+import moment from "https://deno.land/x/momentjs@2.29.1-deno/mod.ts";
+
+const selectQuery = `
+*,
+locations(*),
+consolidations(*),
+disciples(*),
+files(*)
+`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -13,16 +23,22 @@ serve(async (req) => {
   }
 
   if (req.method === "POST") {
-    const { event_type_id, name, date_time } = await req.json();
+    const { event_type, name, date_time, network_id, consolidation_id } =
+      await req.json();
+
+    const payload = {
+      event_type,
+      name,
+      date_time,
+    };
+
+    if (network_id) payload.network_id = network_id;
+    if (consolidation_id) payload.consolidation_id = consolidation_id;
 
     const { data, error } = await supabase
       .from("events")
-      .insert({
-        event_type_id,
-        name,
-        date_time,
-      })
-      .select("*")
+      .insert(payload)
+      .select(selectQuery)
       .single();
 
     if (error) {
@@ -36,12 +52,40 @@ serve(async (req) => {
     return new Response(JSON.stringify(data), {
       headers: cors({ "Content-Type": "application/json" }),
     });
-  } else {
-    return new Response(JSON.stringify({}), {
+  }
+
+  if (req.method === "GET") {
+    const url = new URL(req.url);
+    const params = queryString.parse(url.search);
+
+    const query = supabase.from("events").select(selectQuery);
+    const orQuery = [];
+
+    const startDate = moment(params.date ?? new Date());
+    startDate.set("date", 1);
+
+    const endDate = moment(startDate);
+    endDate.set("month", startDate.month() + 1);
+    endDate.subtract("days", 1);
+
+    query.gte("date_time", startDate.utc().toISOString());
+    query.lte("date_time", endDate.utc().toISOString());
+
+    query.in("event_type", params.type ?? []);
+    query.order("date_time", { ascending: "asc" });
+
+    const { data, error } = await query;
+
+    return new Response(JSON.stringify(data), {
       headers: cors({ "Content-Type": "application/json" }),
-      status: 404,
+      status: 200,
     });
   }
+
+  return new Response(JSON.stringify({}), {
+    headers: cors({ "Content-Type": "application/json" }),
+    status: 404,
+  });
 });
 
 // To invoke:
