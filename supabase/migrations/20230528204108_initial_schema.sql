@@ -1,6 +1,3 @@
-alter table "auth"."refresh_tokens" drop constraint "refresh_tokens_session_id_fkey";
-
-
 create table "public"."consolidation_lessons" (
     "name" text,
     "code" text not null,
