@@ -76,7 +76,7 @@ serve(async (req) => {
 
     const { data, error } = await query;
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify(data ?? []), {
       headers: cors({ "Content-Type": "application/json" }),
       status: 200,
     });
