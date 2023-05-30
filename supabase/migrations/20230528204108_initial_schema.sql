@@ -1,5 +1,3 @@
-alter table "auth"."identities" drop constraint "identities_user_id_fkey";
-
 alter table "auth"."refresh_tokens" drop constraint "refresh_tokens_session_id_fkey";
 
 
