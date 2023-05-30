@@ -20,11 +20,11 @@ create table "public"."events" (
     "date_time" timestamp with time zone,
     "network_id" uuid,
     "consolidation_id" uuid,
-    "participants_id" uuid
+    "participants_id" uuid,
+    "attachments_id" uuid,
+    "locations_id" uuid
 );
 
-
-alter table "public"."events" enable row level security;
 
 create table "public"."files" (
     "id" uuid not null default gen_random_uuid(),
@@ -73,6 +73,10 @@ alter table "public"."event_participants" add constraint "event_participants_par
 
 alter table "public"."event_participants" validate constraint "event_participants_participant_id_fkey";
 
+alter table "public"."events" add constraint "events_attachments_id_fkey" FOREIGN KEY (attachments_id) REFERENCES files(id) ON DELETE CASCADE not valid;
+
+alter table "public"."events" validate constraint "events_attachments_id_fkey";
+
 alter table "public"."events" add constraint "events_consolidation_id_fkey" FOREIGN KEY (consolidation_id) REFERENCES consolidators(id) ON DELETE CASCADE not valid;
 
 alter table "public"."events" validate constraint "events_consolidation_id_fkey";
@@ -81,6 +85,10 @@ alter table "public"."events" add constraint "events_event_type_fkey" FOREIGN KE
 
 alter table "public"."events" validate constraint "events_event_type_fkey";
 
+alter table "public"."events" add constraint "events_locations_id_fkey" FOREIGN KEY (locations_id) REFERENCES locations(id) ON DELETE CASCADE not valid;
+
+alter table "public"."events" validate constraint "events_locations_id_fkey";
+
 alter table "public"."events" add constraint "events_network_id_fkey" FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE not valid;
 
 alter table "public"."events" validate constraint "events_network_id_fkey";
@@ -88,5 +96,10 @@ alter table "public"."events" validate constraint "events_network_id_fkey";
 alter table "public"."events" add constraint "events_participants_id_fkey" FOREIGN KEY (participants_id) REFERENCES disciples(id) ON DELETE CASCADE not valid;
 
 alter table "public"."events" validate constraint "events_participants_id_fkey";
+
+
+alter table "storage"."objects" add constraint "objects_bucket_id_fkey" FOREIGN KEY (bucket_id) REFERENCES storage.buckets(id) not valid;
+
+alter table "storage"."objects" validate constraint "objects_bucket_id_fkey";
 
 
