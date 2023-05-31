@@ -8,6 +8,9 @@
   "scripts": {
     "deploy": "node deploy.js",
     "dev": "supabase functions serve --env-file supabase/.supabase/.env.local",
-    "setup": "supabase init && supabase start"
+    "setup": "supabase init && supabase start",
+    "use:staging": "supabase link --project-ref rxmiusuvjgclcbvounxp",
+    "use:prod": "supabase link --project-ref bsnrwmmolcbhgncwogox",
+    "db:diff": "supabase db diff --use-migra"
   }
 }

@@ -11,9 +11,6 @@ const ignore = ["_shared"];
 
 getDirectories("./supabase/functions").forEach((fn) => {
   if (!ignore.includes(fn)) {
-    execSync(
-      `supabase functions deploy ${fn} --project-ref bsnrwmmolcbhgncwogox`,
-      { stdio: "inherit" }
-    );
+    execSync(`supabase functions deploy ${fn}`, { stdio: "inherit" });
   }
 });
