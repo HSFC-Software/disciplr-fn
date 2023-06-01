@@ -58,6 +58,8 @@ serve(async (req) => {
     const url = new URL(req.url);
     const params = queryString.parse(url.search);
 
+    const network_id = params.network_id;
+
     const query = supabase.from("events").select(selectQuery);
     const orQuery = [];
 
@@ -71,7 +73,11 @@ serve(async (req) => {
     query.gte("date_time", startDate.utc().toISOString());
     query.lte("date_time", endDate.utc().toISOString());
 
-    let event_type = [params.type];
+    if (network_id) {
+      query.eq("network_id", network_id);
+    }
+
+    let event_type = [params.type]; // ["CELLGROUP", "CLOSED_CELL"]
 
     if (Array.isArray(params.type)) {
       event_type = params.type;
@@ -81,6 +87,14 @@ serve(async (req) => {
     query.order("date_time", { ascending: "asc" });
 
     const { data, error } = await query;
+
+    if (error) {
+      log("Error fetching events", req.url, error);
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
 
     return new Response(JSON.stringify(data ?? []), {
       headers: cors({ "Content-Type": "application/json" }),
