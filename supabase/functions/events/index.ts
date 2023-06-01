@@ -13,7 +13,7 @@ const selectQuery = `
 *,
 locations(*),
 consolidations(*),
-disciples(*),
+event_participants(*),
 files(*)
 `;
 
@@ -71,7 +71,13 @@ serve(async (req) => {
     query.gte("date_time", startDate.utc().toISOString());
     query.lte("date_time", endDate.utc().toISOString());
 
-    query.in("event_type", params.type ?? []);
+    let event_type = [params.type];
+
+    if (Array.isArray(params.type)) {
+      event_type = params.type;
+    }
+
+    query.in("event_type", event_type);
     query.order("date_time", { ascending: "asc" });
 
     const { data, error } = await query;
