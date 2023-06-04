@@ -54,6 +54,40 @@ serve(async (req) => {
     });
   }
 
+  // For more details on URLPattern, check https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API
+  const idPattern = new URLPattern({ pathname: "/events/:id" });
+  const matchingPath = idPattern.exec(req.url);
+
+  const id = matchingPath ? matchingPath.pathname.groups.id : null;
+
+  if (req.method === "GET" && id) {
+    const { data, error } = await supabase
+      .from("events")
+      .select(selectQuery)
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      log("Error fetching event", req.url, error);
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
+
+    if (!data) {
+      log("Unable to find event in the records", req.url, { id });
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 404,
+      });
+    }
+
+    return new Response(JSON.stringify(data), {
+      headers: cors({ "Content-Type": "application/json" }),
+    });
+  }
+
   if (req.method === "GET") {
     const url = new URL(req.url);
     const params = queryString.parse(url.search);
