@@ -22,6 +22,43 @@ serve(async (req) => {
     return new Response("ok", { headers: cors() });
   }
 
+  const participantsPattern = new URLPattern({
+    pathname: "/events/participants",
+  });
+  const participantsMatchingPath = participantsPattern.exec(req.url);
+
+  if (participantsMatchingPath?.pathname?.input === "/events/participants") {
+    if (req.method === "POST") {
+      const { event_id, participants } = await req.json();
+
+      const payload =
+        participants?.map?.((id) => ({
+          event_id,
+          participant_id: id,
+        })) || [];
+
+      const { data, error } = await supabase
+        .from("event_participants")
+        .insert(payload)
+        .select(`*`);
+
+      if (error) {
+        log("Error creating event participants", req.url, {
+          ...error,
+          payload,
+        });
+        return new Response(JSON.stringify({}), {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 409,
+        });
+      }
+
+      return new Response(JSON.stringify(data), {
+        headers: cors({ "Content-Type": "application/json" }),
+      });
+    }
+  }
+
   if (req.method === "POST") {
     const { event_type, name, date_time, network_id, consolidation_id } =
       await req.json();
