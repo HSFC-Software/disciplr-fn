@@ -11,10 +11,15 @@ import moment from "https://deno.land/x/momentjs@2.29.1-deno/mod.ts";
 
 const selectQuery = `
 *,
-locations(*),
-consolidations(*),
-event_participants(*),
-files(*)
+event_participants!event_participants_event_id_fkey(
+  id,
+  participant_id(
+    id,
+    first_name,
+    last_name,
+    status
+  )
+)
 `;
 
 serve(async (req) => {
@@ -28,6 +33,30 @@ serve(async (req) => {
   const participantsMatchingPath = participantsPattern.exec(req.url);
 
   if (participantsMatchingPath?.pathname?.input === "/events/participants") {
+    if (req.method === "DELETE") {
+      const url = new URL(req.url);
+      const params = queryString.parse(url.search);
+
+      const id = params.id;
+
+      const { error } = await supabase
+        .from("event_participants")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        log("Error removing event participants", req.url, error);
+        return new Response(JSON.stringify({}), {
+          headers: cors({ "Content-Type": "application/json" }),
+          status: 409,
+        });
+      }
+
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+      });
+    }
+
     if (req.method === "POST") {
       const { event_id, participants } = await req.json();
 
@@ -40,7 +69,7 @@ serve(async (req) => {
       const { data, error } = await supabase
         .from("event_participants")
         .insert(payload)
-        .select(`*`);
+        .select(`id, participant_id`);
 
       if (error) {
         log("Error creating event participants", req.url, {
