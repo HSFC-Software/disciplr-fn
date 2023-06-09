@@ -12,11 +12,14 @@ class Express {
     const baseUrl = url.pathname;
     const query = Object.fromEntries(new URLSearchParams(url.search));
     const method = this.app.request.method;
+    const body = this.app.meta.body;
 
     this.req = {
+      path: baseUrl,
       baseUrl,
       query,
       method,
+      body,
     };
 
     this.res = {
@@ -33,7 +36,13 @@ class Express {
 
   locals: any;
   app: any;
-  req: { baseUrl: string; query: { [key: string]: string }; method: string };
+  req: {
+    path: string;
+    baseUrl: string;
+    query: { [key: string]: string };
+    method: string;
+    body: any;
+  };
   res: {
     send: (data: any) => void;
   };
@@ -48,6 +57,16 @@ class Express {
 
   get(path: string, handler: Handler) {
     if (this.req.method !== "GET") return;
+
+    if (this.middlewares.length > 0)
+      this.middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+  }
+
+  post(path: string, handler: Handler) {
+    if (this.req.method !== "POST") return;
 
     if (this.middlewares.length > 0)
       this.middlewares.push(() => {

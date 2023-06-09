@@ -9,8 +9,15 @@ for await (const conn of server) {
 
 async function serveHttp(conn: Deno.Conn) {
   const httpConn = Deno.serveHttp(conn);
-  for await (const requestEvent of httpConn) {
-    const app = new Express(requestEvent);
+  for await (const conn of httpConn) {
+    const body = await conn.request.json().catch((err) => console.log(err));
+
+    const app = new Express({
+      ...conn,
+      meta: {
+        body,
+      },
+    });
 
     // middleware
     app.use((req, res, next) => {
@@ -34,6 +41,10 @@ async function serveHttp(conn: Deno.Conn) {
     });
 
     app.get("/hellowz", (_, res) => {
+      res.send({ foo: "sbar" });
+    });
+
+    app.post("/hellowz", (_, res) => {
       res.send({ foo: "sbar" });
     });
 
