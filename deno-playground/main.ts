@@ -1,4 +1,4 @@
-import Express from "./express.ts";
+import express from "./express.ts";
 
 const server = Deno.listen({ port: 8080 });
 
@@ -11,13 +11,9 @@ async function serveHttp(conn: Deno.Conn) {
   const httpConn = Deno.serveHttp(conn);
   for await (const conn of httpConn) {
     const body = await conn.request.json().catch((err) => console.log(err));
+    (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
 
-    const app = new Express({
-      ...conn,
-      meta: {
-        body,
-      },
-    });
+    const app = express();
 
     // middleware
     app.use((req, res, next) => {
@@ -44,10 +40,18 @@ async function serveHttp(conn: Deno.Conn) {
       res.send({ foo: "sbar" });
     });
 
+    const router = express.Router();
+    router
+      .route("/hellow") //
+      .get((_, res) => {
+        console.log("hellow: get");
+        res.status(400).send({ bar: "baz" });
+      });
+
+    app.use(router);
+
     app.post("/hellowz", (_, res) => {
       res.status(404).send({ foo: "sbar" });
     });
-
-    // router
   }
 }
