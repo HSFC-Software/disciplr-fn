@@ -1,9 +1,30 @@
-type MiddleWare = (req: any, res: any, next: () => void) => void;
-type Handler = (req: any, res: any) => void;
-
 import { pathToRegexp } from "https://deno.land/x/path_to_regexp@v6.2.1/index.ts";
 
+type Req = {
+  path: string;
+  baseUrl: string;
+  query: { [key: string]: string };
+  method: string;
+  body: any;
+};
+
+type Res = {
+  send: (data: any) => void;
+  locals: any;
+  status: (code: number) => Res;
+};
+
+type Handler = (req: Req, res: Res) => void;
+type MiddleWare = (req: Req, res: Res, next: () => void) => void;
+
 class Express {
+  locals: any;
+  app: any;
+  req: Req;
+  res: Res;
+  middlewares: MiddleWare[] = [];
+  statusCode = 200;
+
   constructor(app: any) {
     this.locals = {};
     this.app = app;
@@ -26,27 +47,18 @@ class Express {
       send: (data: any) => {
         this.app.respondWith(
           new Response(JSON.stringify(data), {
-            status: 200,
+            status: this.statusCode,
             headers: { "content-type": "application/json" },
           })
         );
       },
+      status: (code: number) => {
+        this.statusCode = code || this.statusCode;
+        return this.res;
+      },
+      locals: {},
     };
   }
-
-  locals: any;
-  app: any;
-  req: {
-    path: string;
-    baseUrl: string;
-    query: { [key: string]: string };
-    method: string;
-    body: any;
-  };
-  res: {
-    send: (data: any) => void;
-  };
-  middlewares: MiddleWare[] = [];
 
   #method(path: string, handler: Handler) {
     if (pathToRegexp(path).exec(this.req.baseUrl)) {

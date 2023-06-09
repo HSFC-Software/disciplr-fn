@@ -45,7 +45,7 @@ async function serveHttp(conn: Deno.Conn) {
     });
 
     app.post("/hellowz", (_, res) => {
-      res.send({ foo: "sbar" });
+      res.status(404).send({ foo: "sbar" });
     });
 
     // router
