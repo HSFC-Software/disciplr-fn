@@ -1,8 +1,9 @@
-import express from "./express.ts";
+import express from "../_shared/express.ts";
+import google from "./_route/google.ts";
+import hellow from "./_route/hellow.ts";
 
-const server = Deno.listen({ port: 8080 });
+const server = Deno.listen({ port: 4507 });
 
-// Connections to the server will be yielded up as an async iterable.
 for await (const conn of server) {
   serveHttp(conn);
 }
@@ -14,11 +15,7 @@ async function serveHttp(conn: Deno.Conn) {
     (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
 
     const app = express();
-    const router = express.Router();
-    app.use(router);
-
-    app.post("/hellowz", (_, res) => {
-      res.status(404).send({ foo: "sbar" });
-    });
+    app.use(google());
+    app.use(hellow());
   }
 }
