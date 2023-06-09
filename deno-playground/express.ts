@@ -63,8 +63,6 @@ class Express {
   }
 
   #method(path: string | Handler, handler?: Handler) {
-    console.log("routePath:", this.#routePath);
-
     if (typeof path === "function") {
       handler = path;
       path = this.#routePath;
@@ -76,54 +74,64 @@ class Express {
     }
   }
 
-  get(path: string | Handler, handler?: Handler) {
-    if (this.#req.method !== "GET") return;
+  get(path: string | Handler, handler?: Handler): Express {
+    if (this.#req.method === "GET") {
+      if (this.#middlewares.length > 0)
+        this.#middlewares.push(() => {
+          this.#method(path, handler);
+        });
+      else this.#method(path, handler);
+    }
 
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method(path, handler);
-      });
-    else this.#method(path, handler);
+    return this;
   }
 
-  post(path: string, handler: Handler) {
-    if (this.#req.method !== "POST") return;
+  post(path: string | Handler, handler?: Handler) {
+    if (this.#req.method === "POST") {
+      if (this.#middlewares.length > 0)
+        this.#middlewares.push(() => {
+          this.#method(path, handler);
+        });
+      else this.#method(path, handler);
+    }
 
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method(path, handler);
-      });
-    else this.#method(path, handler);
+    return this;
   }
 
-  put(path: string, handler: Handler) {
-    if (this.#req.method !== "PUT") return;
+  put(path: string | Handler, handler?: Handler) {
+    if (this.#req.method === "PUT") {
+      if (this.#middlewares.length > 0)
+        this.#middlewares.push(() => {
+          this.#method(path, handler);
+        });
+      else this.#method(path, handler);
+    }
 
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method(path, handler);
-      });
-    else this.#method(path, handler);
+    return this;
   }
 
-  delete(path: string, handler: Handler) {
-    if (this.#req.method !== "DELETE") return;
+  delete(path: string | Handler, handler?: Handler) {
+    if (this.#req.method === "DELETE") {
+      if (this.#middlewares.length > 0)
+        this.#middlewares.push(() => {
+          this.#method(path, handler);
+        });
+      else this.#method(path, handler);
+    }
 
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method(path, handler);
-      });
-    else this.#method(path, handler);
+    return this;
   }
 
-  patch(path: string, handler: Handler) {
-    if (this.#req.method !== "PATCH") return;
+  patch(path: string | Handler, handler?: Handler) {
+    if (this.#req.method === "PATCH") {
+      if (this.#middlewares.length > 0)
+        this.#middlewares.push(() => {
+          this.#method(path, handler);
+        });
+      else this.#method(path, handler);
+    }
 
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method(path, handler);
-      });
-    else this.#method(path, handler);
+    return this;
   }
 
   use(handler: MiddleWare | Router) {

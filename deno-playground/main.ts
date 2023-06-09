@@ -44,8 +44,19 @@ async function serveHttp(conn: Deno.Conn) {
     router
       .route("/hellow") //
       .get((_, res) => {
-        console.log("hellow: get");
         res.status(400).send({ bar: "baz" });
+      })
+      .post((_, res) => {
+        res.status(400).send({ post: "baz" });
+      })
+      .patch((_, res) => {
+        res.status(400).send({ patch: "baz" });
+      })
+      .put((_, res) => {
+        res.status(400).send({ put: "baz" });
+      })
+      .delete((_, res) => {
+        res.status(400).send({ delete: "baz" });
       });
 
     app.use(router);
