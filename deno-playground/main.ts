@@ -15,7 +15,7 @@ async function serveHttp(conn: Deno.Conn) {
     // middleware
     app.use((req, res, next) => {
       console.log("called[0]");
-      // next();
+      next();
     });
 
     app.use((req, res, next) => {
@@ -34,7 +34,6 @@ async function serveHttp(conn: Deno.Conn) {
     });
 
     app.get("/hellowz", (_, res) => {
-      console.log("called");
       res.send({ foo: "sbar" });
     });
 

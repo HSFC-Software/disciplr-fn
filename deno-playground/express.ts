@@ -39,18 +39,27 @@ class Express {
   };
   middlewares: MiddleWare[] = [];
 
-  get(path: string, handler: Handler) {
+  #method(path: string, handler: Handler) {
     if (pathToRegexp(path).exec(this.req.baseUrl)) {
       handler(this.req, this.res);
       return this;
     }
   }
 
+  get(path: string, handler: Handler) {
+    if (this.req.method !== "GET") return;
+
+    if (this.middlewares.length > 0)
+      this.middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+  }
+
   use(handler: MiddleWare) {
     this.middlewares.push(handler);
 
     const nextHandler = () => {
-      console.log("nextHandler is called.");
       this.middlewares.shift();
 
       if (this.middlewares.length > 0) {
