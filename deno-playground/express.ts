@@ -75,6 +75,36 @@ class Express {
     else this.#method(path, handler);
   }
 
+  put(path: string, handler: Handler) {
+    if (this.req.method !== "PUT") return;
+
+    if (this.middlewares.length > 0)
+      this.middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+  }
+
+  delete(path: string, handler: Handler) {
+    if (this.req.method !== "DELETE") return;
+
+    if (this.middlewares.length > 0)
+      this.middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+  }
+
+  patch(path: string, handler: Handler) {
+    if (this.req.method !== "PATCH") return;
+
+    if (this.middlewares.length > 0)
+      this.middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+  }
+
   use(handler: MiddleWare) {
     this.middlewares.push(handler);
 
