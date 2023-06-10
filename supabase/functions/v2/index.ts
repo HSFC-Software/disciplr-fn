@@ -2,21 +2,14 @@ import express from "../_shared/express.ts";
 import google from "./_route/google.ts";
 import hello from "./_route/hello.ts";
 
-const server = Deno.listen({ port: 4507 });
+const app = express();
 
-for await (const conn of server) {
-  serveHttp(conn);
-}
+app.use((req, __, next) => {
+  console.log(new Date(), `[${req.method}] ${req.baseUrl}`);
+  next();
+});
 
-async function serveHttp(conn: Deno.Conn) {
-  const httpConn = Deno.serveHttp(conn);
-  for await (const conn of httpConn) {
-    const body = await conn.request.json().catch(() => {});
-    (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
+app.use(google);
+app.use(hello);
 
-    const app = express();
-
-    app.use(google());
-    app.use(hello());
-  }
-}
+await app.listen(4507);

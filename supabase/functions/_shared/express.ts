@@ -20,16 +20,31 @@ type Handler = (req: Request, res: Response) => void;
 type MiddleWare = (req: Request, res: Response, next: () => void) => void;
 type Router = Omit<Express, "use">;
 
+type MethodParams = {
+  method: string;
+  path: string | Handler;
+  handler?: Handler;
+  req: Request;
+  res: Response;
+  routePath?: string;
+};
+
 class Express {
   #app: any;
-  #req: Request;
-  #res: Response;
+  #req = {} as Request;
+  #res = {} as Response;
   #middlewares: MiddleWare[] = [];
   #statusCode = 200;
   #routePath = "/";
 
-  constructor(app: any) {
-    this.#app = app;
+  constructor(app?: any) {
+    if (app) {
+      this.#handleInit();
+    }
+  }
+
+  #handleInit() {
+    this.#app = (globalThis as any).__EXPRESS__;
 
     const url = new URL(this.#app.request.url);
     const baseUrl = url.pathname;
@@ -66,7 +81,7 @@ class Express {
     };
   }
 
-  #setParams(path: string) {
+  handleGetParams(path: string, url: string) {
     const params: { [key: string]: string } = {};
 
     const str = path;
@@ -80,110 +95,148 @@ class Express {
 
     matchers.forEach((key) => {
       const pattern = new RegExp(path.replace(`:${key}`, "([^/]+)"));
-      const match = this.#req.baseUrl.match(pattern);
+      const match = url.match(pattern);
       if (match) {
         const value = match[1];
         params[key] = value;
       }
     });
 
-    this.#req.params = params;
+    return params;
   }
 
-  #method(path: string | Handler, handler?: Handler) {
-    if (typeof path === "function") {
-      handler = path;
-      path = this.#routePath;
-    }
+  #method({ method, path, handler, req, res, routePath }: MethodParams) {
+    if (req.method === method) {
+      if (typeof path === "function") {
+        handler = path;
+        path = routePath || this.#routePath;
 
-    this.#setParams(path);
+        routePath = undefined;
+      }
 
-    if (pathToRegexp(String(path)).exec(this.#req.baseUrl)) {
-      handler?.(this.#req, this.#res);
-      return this;
+      // instance router integration
+      if (routePath) {
+        path = routePath + path;
+      }
+
+      const params = this.handleGetParams(path, req.baseUrl);
+
+      req.params = params;
+
+      if (pathToRegexp(String(path)).exec(req.baseUrl)) {
+        handler?.(req, res);
+        return this;
+      }
     }
+  }
+
+  #handleMethod(method: string, path: string | Handler, handler?: Handler) {
+    let routePath: string | undefined = this.#routePath;
+
+    // prevent double slash route
+    if (routePath === "/") routePath = undefined;
+
+    this.#middlewares.push((req, res, next) => {
+      this.#method({
+        method,
+        path,
+        handler,
+        req,
+        res,
+        routePath,
+      });
+      next();
+    });
   }
 
   get(path: string | Handler, handler?: Handler): Express {
-    if (this.#req.method === "GET") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
-
+    this.#handleMethod("GET", path, handler);
     return this;
   }
 
   post(path: string | Handler, handler?: Handler) {
-    if (this.#req.method === "POST") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
-
+    this.#handleMethod("POST", path, handler);
     return this;
   }
 
   put(path: string | Handler, handler?: Handler) {
-    if (this.#req.method === "PUT") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
-
+    this.#handleMethod("PUT", path, handler);
     return this;
   }
 
   delete(path: string | Handler, handler?: Handler) {
-    if (this.#req.method === "DELETE") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
-
+    this.#handleMethod("DELETE", path, handler);
     return this;
   }
 
   patch(path: string | Handler, handler?: Handler) {
-    if (this.#req.method === "PATCH") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
-
+    this.#handleMethod("PATCH", path, handler);
     return this;
   }
 
-  use(handler: MiddleWare | Router) {
-    if (typeof handler !== "function") {
-      return;
+  #handleNext = () => {
+    this.#middlewares.shift();
+
+    if (this.#middlewares.length > 0) {
+      this.#middlewares[0](this.#req, this.#res, this.#handleNext);
     }
-    this.#middlewares.push(handler);
+  };
 
-    const nextHandler = () => {
-      this.#middlewares.shift();
+  #handleStart(handler: MiddleWare | Router) {
+    if (typeof handler === "function") {
+      this.#middlewares.unshift(handler);
+      this.#middlewares[0](this.#req, this.#res, this.#handleNext);
+    }
+  }
 
-      if (this.#middlewares.length > 0) {
-        this.#middlewares[0](this.#req, this.#res, nextHandler);
+  use(handler: MiddleWare | Router) {
+    if (typeof handler === "function") {
+      this.#middlewares.push(handler);
+
+      if (this.#app) {
+        if (this.#middlewares.length === 1)
+          this.#middlewares[0](this.#req, this.#res, this.#handleNext);
+      }
+    } else {
+      // instance router integration
+      const _app = handler as Express;
+
+      _app.#middlewares.forEach((middleware) => {
+        this.#middlewares.push((res, req, next) => middleware(res, req, next));
+      });
+    }
+  }
+
+  // static router
+  route(path: string): Omit<this, "route"> {
+    this.#routePath = path;
+    return this;
+  }
+
+  async listen(port: string | number, callback?: () => void) {
+    const server = Deno.listen({ port: Number(port) });
+
+    const serveHttp = async (conn: Deno.Conn) => {
+      const httpConn = Deno.serveHttp(conn);
+
+      for await (const conn of httpConn) {
+        const body = await conn.request.json().catch(() => {});
+        (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
+
+        const app = new Express();
+
+        app.#handleInit();
+        app.#middlewares = [...(this.#middlewares ?? [])];
+        app.#handleStart((_, __, next) => next());
       }
     };
 
-    if (this.#middlewares.length === 1)
-      this.#middlewares[0](this.#req, this.#res, nextHandler);
-  }
+    callback?.();
 
-  route(path: string): Omit<this, "route"> {
-    this.#routePath = path;
+    for await (const conn of server) {
+      serveHttp(conn);
+    }
+
     return this;
   }
 }
