@@ -11,7 +11,7 @@ for await (const conn of server) {
 async function serveHttp(conn: Deno.Conn) {
   const httpConn = Deno.serveHttp(conn);
   for await (const conn of httpConn) {
-    const body = await conn.request.json().catch((err) => console.log(err));
+    const body = await conn.request.json().catch(() => {});
     (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
 
     const app = express();

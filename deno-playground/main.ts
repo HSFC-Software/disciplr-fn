@@ -14,11 +14,8 @@ async function serveHttp(conn: Deno.Conn) {
     (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
 
     const app = express();
-    const router = express.Router();
-    app.use(router);
-
-    app.post("/hellowz", (_, res) => {
-      res.status(404).send({ foo: "sbar" });
+    app.post("/hello", (_, res) => {
+      res.status(404).send({ foo: "bar" });
     });
   }
 }
