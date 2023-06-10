@@ -96,64 +96,58 @@ class Express {
     this.#req.params = params;
   }
 
-  #method(path: string | Handler, handler?: Handler) {
-    if (typeof path === "function") {
-      handler = path;
-      path = this.#routePath;
-    }
+  #method(method: string, path: string | Handler, handler?: Handler) {
+    if (this.#req.method === method) {
+      if (typeof path === "function") {
+        handler = path;
+        path = this.#routePath;
+      }
 
-    this.#setParams(path);
+      this.#setParams(path);
 
-    if (pathToRegexp(String(path)).exec(this.#req.baseUrl)) {
-      handler?.(this.#req, this.#res);
-      return this;
+      if (pathToRegexp(String(path)).exec(this.#req.baseUrl)) {
+        handler?.(this.#req, this.#res);
+        return this;
+      }
     }
   }
 
   get(path: string | Handler, handler?: Handler): Express {
-    // if (this.#req.method === "GET") {
     if (this.#middlewares.length > 0)
       this.#middlewares.push(() => {
-        this.#method(path, handler);
+        this.#method("GET", path, handler);
       });
-    else this.#method(path, handler);
-    // }
+    else this.#method("GET", path, handler);
 
     return this;
   }
 
   post(path: string | Handler, handler?: Handler) {
-    // if (this.#req.method === "POST") {
     if (this.#middlewares.length > 0)
       this.#middlewares.push(() => {
-        this.#method(path, handler);
+        this.#method("POST", path, handler);
       });
-    else this.#method(path, handler);
-    // }
+    else this.#method("POST", path, handler);
 
     return this;
   }
 
   put(path: string | Handler, handler?: Handler) {
-    // if (this.#req.method === "PUT") {
     if (this.#middlewares.length > 0)
       this.#middlewares.push(() => {
-        this.#method(path, handler);
+        this.#method("PUT", path, handler);
       });
-    else this.#method(path, handler);
-    // }
+    else this.#method("PUT", path, handler);
 
     return this;
   }
 
   delete(path: string | Handler, handler?: Handler) {
-    // if (this.#req.method === "DELETE") {
     if (this.#middlewares.length > 0)
       this.#middlewares.push(() => {
-        this.#method(path, handler);
+        this.#method("DELETE", path, handler);
       });
-    else this.#method(path, handler);
-    // }
+    else this.#method("DELETE", path, handler);
 
     return this;
   }
@@ -162,9 +156,9 @@ class Express {
     // if (this.#req.method === "PATCH") {
     if (this.#middlewares.length > 0)
       this.#middlewares.push(() => {
-        this.#method(path, handler);
+        this.#method("PATCH", path, handler);
       });
-    else this.#method(path, handler);
+    else this.#method("PATCH", path, handler);
     // }
 
     return this;
