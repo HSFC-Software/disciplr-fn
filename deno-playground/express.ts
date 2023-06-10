@@ -30,11 +30,11 @@ class Express {
 
   constructor(app?: any) {
     if (app) {
-      this.#init();
+      this.#handleInit();
     }
   }
 
-  #init() {
+  #handleInit() {
     this.#app = (globalThis as any).__EXPRESS__;
 
     const url = new URL(this.#app.request.url);
@@ -112,70 +112,51 @@ class Express {
     }
   }
 
-  get(path: string | Handler, handler?: Handler): Express {
+  #handleMethod(method: string, path: string | Handler, handler?: Handler) {
     if (this.#middlewares.length > 0)
       this.#middlewares.push(() => {
-        this.#method("GET", path, handler);
+        this.#method(method, path, handler);
       });
-    else this.#method("GET", path, handler);
+    else this.#method(method, path, handler);
+  }
 
+  get(path: string | Handler, handler?: Handler): Express {
+    this.#handleMethod("GET", path, handler);
     return this;
   }
 
   post(path: string | Handler, handler?: Handler) {
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method("POST", path, handler);
-      });
-    else this.#method("POST", path, handler);
-
+    this.#handleMethod("POST", path, handler);
     return this;
   }
 
   put(path: string | Handler, handler?: Handler) {
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method("PUT", path, handler);
-      });
-    else this.#method("PUT", path, handler);
-
+    this.#handleMethod("PUT", path, handler);
     return this;
   }
 
   delete(path: string | Handler, handler?: Handler) {
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method("DELETE", path, handler);
-      });
-    else this.#method("DELETE", path, handler);
-
+    this.#handleMethod("DELETE", path, handler);
     return this;
   }
 
   patch(path: string | Handler, handler?: Handler) {
-    // if (this.#req.method === "PATCH") {
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method("PATCH", path, handler);
-      });
-    else this.#method("PATCH", path, handler);
-    // }
-
+    this.#handleMethod("PATCH", path, handler);
     return this;
   }
 
-  #nextHandler = () => {
+  #handleNext = () => {
     this.#middlewares.shift();
 
     if (this.#middlewares.length > 0) {
-      this.#middlewares[0](this.#req, this.#res, this.#nextHandler);
+      this.#middlewares[0](this.#req, this.#res, this.#handleNext);
     }
   };
 
-  #start(handler: MiddleWare | Router) {
+  #handleStart(handler: MiddleWare | Router) {
     if (typeof handler === "function") {
       this.#middlewares.unshift(handler);
-      this.#middlewares[0](this.#req, this.#res, this.#nextHandler);
+      this.#middlewares[0](this.#req, this.#res, this.#handleNext);
     }
   }
 
@@ -185,7 +166,7 @@ class Express {
 
       if (this.#app) {
         if (this.#middlewares.length === 1)
-          this.#middlewares[0](this.#req, this.#res, this.#nextHandler);
+          this.#middlewares[0](this.#req, this.#res, this.#handleNext);
       }
     } else {
       // integrate new application
@@ -207,8 +188,8 @@ class Express {
         const body = await conn.request.json().catch(() => {});
         (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
 
-        this.#init();
-        this.#start((_, __, next) => next());
+        this.#handleInit();
+        this.#handleStart((_, __, next) => next());
       }
     };
 
