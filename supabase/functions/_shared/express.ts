@@ -7,6 +7,7 @@ export type Request = {
   method: string;
   body: any;
   locals: any;
+  params: { [key: string]: string };
 };
 
 export type Response = {
@@ -43,6 +44,7 @@ class Express {
       method,
       body,
       locals: {},
+      params: {},
     };
 
     this.#res = {
@@ -62,11 +64,37 @@ class Express {
     };
   }
 
+  #setParams(path: string) {
+    const params: { [key: string]: string } = {};
+
+    const str = path;
+    const regex = /\/:(\w+)/g;
+    const matchers: string[] = [];
+
+    let match;
+    while ((match = regex.exec(str)) !== null) {
+      matchers.push(match[1]);
+    }
+
+    matchers.forEach((key) => {
+      const pattern = new RegExp(path.replace(`:${key}`, "([^/]+)"));
+      const match = this.#req.baseUrl.match(pattern);
+      if (match) {
+        const value = match[1];
+        params[key] = value;
+      }
+    });
+
+    this.#req.params = params;
+  }
+
   #method(path: string | Handler, handler?: Handler) {
     if (typeof path === "function") {
       handler = path;
       path = this.#routePath;
     }
+
+    this.#setParams(path);
 
     if (pathToRegexp(String(path)).exec(this.#req.baseUrl)) {
       handler?.(this.#req, this.#res);
