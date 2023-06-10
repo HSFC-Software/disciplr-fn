@@ -20,6 +20,15 @@ type Handler = (req: Request, res: Response) => void;
 type MiddleWare = (req: Request, res: Response, next: () => void) => void;
 type Router = Omit<Express, "use">;
 
+type MethodParams = {
+  method: string;
+  path: string | Handler;
+  handler?: Handler;
+  req: Request;
+  res: Response;
+  routePath?: string;
+};
+
 class Express {
   #app: any;
   #req = {} as Request;
@@ -97,23 +106,18 @@ class Express {
     this.#req.params = params;
   }
 
-  #method({
-    method,
-    path,
-    handler,
-    req,
-    res,
-  }: {
-    method: string;
-    path: string | Handler;
-    handler?: Handler;
-    req: Request;
-    res: Response;
-  }) {
+  #method({ method, path, handler, req, res, routePath }: MethodParams) {
     if (req.method === method) {
       if (typeof path === "function") {
         handler = path;
-        path = this.#routePath;
+        path = routePath || this.#routePath;
+
+        routePath = undefined;
+      }
+
+      // instance router integration
+      if (routePath) {
+        path = routePath + path;
       }
 
       this.#setParams(path);
@@ -126,8 +130,20 @@ class Express {
   }
 
   #handleMethod(method: string, path: string | Handler, handler?: Handler) {
+    let routePath: string | undefined = this.#routePath;
+
+    // prevent double slash route
+    if (routePath === "/") routePath = undefined;
+
     this.#middlewares.push((req, res, next) => {
-      this.#method({ method, path, handler, req, res });
+      this.#method({
+        method,
+        path,
+        handler,
+        req,
+        res,
+        routePath,
+      });
       next();
     });
   }
@@ -181,10 +197,16 @@ class Express {
           this.#middlewares[0](this.#req, this.#res, this.#handleNext);
       }
     } else {
-      // integrate new application
+      // instance router integration
+      const _app = handler as Express;
+
+      _app.#middlewares.forEach((middleware) => {
+        this.#middlewares.push((res, req, next) => middleware(res, req, next));
+      });
     }
   }
 
+  // static router
   route(path: string): Omit<this, "route"> {
     this.#routePath = path;
     return this;
