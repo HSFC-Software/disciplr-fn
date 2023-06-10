@@ -49,12 +49,14 @@ class Express {
 
     this.#res = {
       send: (data: any) => {
-        this.#app.respondWith(
-          new Response(JSON.stringify(data), {
-            status: this.#statusCode,
-            headers: { "content-type": "application/json" },
-          })
-        );
+        if (data.status !== "INVALID_REQUEST") {
+          this.#app.respondWith(
+            new Response(JSON.stringify(data), {
+              status: this.#statusCode,
+              headers: { "content-type": "application/json" },
+            })
+          );
+        }
       },
       status: (code: number) => {
         this.#statusCode = code || this.#statusCode;
