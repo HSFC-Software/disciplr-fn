@@ -4,9 +4,9 @@ export default () => {
   const router = express.Router();
 
   router
-    .route("/v2/hellow") //
+    .route("/v2/hello") //
     .get((_, res) => {
-      res.send({ hellow: "world" });
+      res.send({ hello: "world" });
     });
 
   return router;

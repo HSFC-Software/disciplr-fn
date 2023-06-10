@@ -1,6 +1,6 @@
 import express from "../_shared/express.ts";
 import google from "./_route/google.ts";
-import hellow from "./_route/hellow.ts";
+import hello from "./_route/hello.ts";
 
 const server = Deno.listen({ port: 4507 });
 
@@ -15,7 +15,8 @@ async function serveHttp(conn: Deno.Conn) {
     (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
 
     const app = express();
+
     app.use(google());
-    app.use(hellow());
+    app.use(hello());
   }
 }
