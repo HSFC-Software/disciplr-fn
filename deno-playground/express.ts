@@ -27,6 +27,7 @@ class Express {
   #middlewares: MiddleWare[] = [];
   #statusCode = 200;
   #routePath = "/";
+  #requestCount = 0;
 
   constructor(app?: any) {
     if (app) {
@@ -96,8 +97,20 @@ class Express {
     this.#req.params = params;
   }
 
-  #method(method: string, path: string | Handler, handler?: Handler) {
-    if (this.#req.method === method) {
+  #method({
+    method,
+    path,
+    handler,
+    req,
+    res,
+  }: {
+    method: string;
+    path: string | Handler;
+    handler?: Handler;
+    req: Request;
+    res: Response;
+  }) {
+    if (req.method === method) {
       if (typeof path === "function") {
         handler = path;
         path = this.#routePath;
@@ -105,19 +118,18 @@ class Express {
 
       this.#setParams(path);
 
-      if (pathToRegexp(String(path)).exec(this.#req.baseUrl)) {
-        handler?.(this.#req, this.#res);
+      if (pathToRegexp(String(path)).exec(req.baseUrl)) {
+        handler?.(req, res);
         return this;
       }
     }
   }
 
   #handleMethod(method: string, path: string | Handler, handler?: Handler) {
-    if (this.#middlewares.length > 0)
-      this.#middlewares.push(() => {
-        this.#method(method, path, handler);
-      });
-    else this.#method(method, path, handler);
+    this.#middlewares.push((req, res, next) => {
+      this.#method({ method, path, handler, req, res });
+      next();
+    });
   }
 
   get(path: string | Handler, handler?: Handler): Express {
@@ -188,8 +200,11 @@ class Express {
         const body = await conn.request.json().catch(() => {});
         (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
 
-        this.#handleInit();
-        this.#handleStart((_, __, next) => next());
+        const app = new Express();
+
+        app.#handleInit();
+        app.#middlewares = [...(this.#middlewares ?? [])];
+        app.#handleStart((_, __, next) => next());
       }
     };
 
