@@ -1,34 +1,41 @@
 import { pathToRegexp } from "https://deno.land/x/path_to_regexp@v6.2.1/index.ts";
 
-type Req = {
+export type Request = {
   path: string;
   baseUrl: string;
   query: { [key: string]: string };
   method: string;
   body: any;
   locals: any;
+  params: { [key: string]: string };
 };
 
-type Res = {
+export type Response = {
   send: (data: any) => void;
   locals: any;
-  status: (code: number) => Res;
+  status: (code: number) => Response;
 };
 
-type Handler = (req: Req, res: Res) => void;
-type MiddleWare = (req: Req, res: Res, next: () => void) => void;
+type Handler = (req: Request, res: Response) => void;
+type MiddleWare = (req: Request, res: Response, next: () => void) => void;
 type Router = Omit<Express, "use">;
 
 class Express {
   #app: any;
-  #req: Req;
-  #res: Res;
+  #req = {} as Request;
+  #res = {} as Response;
   #middlewares: MiddleWare[] = [];
   #statusCode = 200;
   #routePath = "/";
 
-  constructor(app: any) {
-    this.#app = app;
+  constructor(app?: any) {
+    if (app) {
+      this.#init();
+    }
+  }
+
+  #init() {
+    this.#app = (globalThis as any).__EXPRESS__;
 
     const url = new URL(this.#app.request.url);
     const baseUrl = url.pathname;
@@ -43,16 +50,19 @@ class Express {
       method,
       body,
       locals: {},
+      params: {},
     };
 
     this.#res = {
       send: (data: any) => {
-        this.#app.respondWith(
-          new Response(JSON.stringify(data), {
-            status: this.#statusCode,
-            headers: { "content-type": "application/json" },
-          })
-        );
+        if (data.status !== "INVALID_REQUEST") {
+          this.#app.respondWith(
+            new Response(JSON.stringify(data), {
+              status: this.#statusCode,
+              headers: { "content-type": "application/json" },
+            })
+          );
+        }
       },
       status: (code: number) => {
         this.#statusCode = code || this.#statusCode;
@@ -62,11 +72,37 @@ class Express {
     };
   }
 
+  #setParams(path: string) {
+    const params: { [key: string]: string } = {};
+
+    const str = path;
+    const regex = /\/:(\w+)/g;
+    const matchers: string[] = [];
+
+    let match;
+    while ((match = regex.exec(str)) !== null) {
+      matchers.push(match[1]);
+    }
+
+    matchers.forEach((key) => {
+      const pattern = new RegExp(path.replace(`:${key}`, "([^/]+)"));
+      const match = this.#req.baseUrl.match(pattern);
+      if (match) {
+        const value = match[1];
+        params[key] = value;
+      }
+    });
+
+    this.#req.params = params;
+  }
+
   #method(path: string | Handler, handler?: Handler) {
     if (typeof path === "function") {
       handler = path;
       path = this.#routePath;
     }
+
+    this.#setParams(path);
 
     if (pathToRegexp(String(path)).exec(this.#req.baseUrl)) {
       handler?.(this.#req, this.#res);
@@ -75,85 +111,119 @@ class Express {
   }
 
   get(path: string | Handler, handler?: Handler): Express {
-    if (this.#req.method === "GET") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
+    // if (this.#req.method === "GET") {
+    if (this.#middlewares.length > 0)
+      this.#middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+    // }
 
     return this;
   }
 
   post(path: string | Handler, handler?: Handler) {
-    if (this.#req.method === "POST") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
+    // if (this.#req.method === "POST") {
+    if (this.#middlewares.length > 0)
+      this.#middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+    // }
 
     return this;
   }
 
   put(path: string | Handler, handler?: Handler) {
-    if (this.#req.method === "PUT") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
+    // if (this.#req.method === "PUT") {
+    if (this.#middlewares.length > 0)
+      this.#middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+    // }
 
     return this;
   }
 
   delete(path: string | Handler, handler?: Handler) {
-    if (this.#req.method === "DELETE") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
+    // if (this.#req.method === "DELETE") {
+    if (this.#middlewares.length > 0)
+      this.#middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+    // }
 
     return this;
   }
 
   patch(path: string | Handler, handler?: Handler) {
-    if (this.#req.method === "PATCH") {
-      if (this.#middlewares.length > 0)
-        this.#middlewares.push(() => {
-          this.#method(path, handler);
-        });
-      else this.#method(path, handler);
-    }
+    // if (this.#req.method === "PATCH") {
+    if (this.#middlewares.length > 0)
+      this.#middlewares.push(() => {
+        this.#method(path, handler);
+      });
+    else this.#method(path, handler);
+    // }
 
     return this;
   }
 
-  use(handler: MiddleWare | Router) {
-    if (typeof handler !== "function") {
-      return;
+  #nextHandler = () => {
+    this.#middlewares.shift();
+
+    if (this.#middlewares.length > 0) {
+      this.#middlewares[0](this.#req, this.#res, this.#nextHandler);
     }
-    this.#middlewares.push(handler);
+  };
 
-    const nextHandler = () => {
-      this.#middlewares.shift();
+  #start(handler: MiddleWare | Router) {
+    if (typeof handler === "function") {
+      this.#middlewares.unshift(handler);
+      this.#middlewares[0](this.#req, this.#res, this.#nextHandler);
+    }
+  }
 
-      if (this.#middlewares.length > 0) {
-        this.#middlewares[0](this.#req, this.#res, nextHandler);
+  use(handler: MiddleWare | Router) {
+    if (typeof handler === "function") {
+      this.#middlewares.push(handler);
+
+      if (this.#app) {
+        if (this.#middlewares.length === 1)
+          this.#middlewares[0](this.#req, this.#res, this.#nextHandler);
       }
-    };
-
-    if (this.#middlewares.length === 1)
-      this.#middlewares[0](this.#req, this.#res, nextHandler);
+    } else {
+      // integrate new application
+    }
   }
 
   route(path: string): Omit<this, "route"> {
     this.#routePath = path;
+    return this;
+  }
+
+  async listen(port: string | number, callback?: () => void) {
+    const server = Deno.listen({ port: Number(port) });
+
+    const serveHttp = async (conn: Deno.Conn) => {
+      const httpConn = Deno.serveHttp(conn);
+
+      for await (const conn of httpConn) {
+        const body = await conn.request.json().catch(() => {});
+        (globalThis as any).__EXPRESS__ = { ...conn, meta: { body } };
+
+        this.#init();
+        this.#start((_, __, next) => next());
+      }
+    };
+
+    callback?.();
+
+    for await (const conn of server) {
+      serveHttp(conn);
+    }
+
     return this;
   }
 }
