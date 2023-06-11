@@ -10,10 +10,15 @@ export type Request = {
   params: { [key: string]: string };
 };
 
+export type Headers = { [key: string]: string };
+type SetHeader = (key: string | Headers, value?: string) => void;
+
 export type Response = {
   send: (data: any) => void;
   locals: any;
   status: (code: number) => Response;
+  set: SetHeader;
+  headers: Headers;
 };
 
 type Handler = (req: Request, res: Response) => void;
@@ -63,21 +68,35 @@ class Express {
     };
 
     this.#res = {
-      send: (data: any) => {
-        if (data.status !== "INVALID_REQUEST") {
-          this.#app.respondWith(
-            new Response(JSON.stringify(data), {
-              status: this.#statusCode,
-              headers: { "content-type": "application/json" },
-            })
-          );
-        }
-      },
       status: (code: number) => {
         this.#statusCode = code || this.#statusCode;
         return this.#res;
       },
       locals: {},
+      headers: {},
+      set(key, value) {
+        if (typeof key === "object") {
+          this.headers = {
+            ...this.headers,
+            ...key,
+          };
+        } else {
+          if (value) this.headers[key] = value;
+        }
+      },
+      send: (data: any) => {
+        if (data.status !== "INVALID_REQUEST") {
+          this.#app.respondWith(
+            new Response(JSON.stringify(data), {
+              status: this.#statusCode,
+              headers: {
+                "content-type": "application/json",
+                ...(this.#res.headers ?? {}),
+              },
+            })
+          );
+        }
+      },
     };
   }
 
