@@ -12,7 +12,7 @@ router
     const response = await axiod.get(
       `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${
         query.input ?? ""
-      }&key=${key}`
+      }&key=${key}&components=country:PH`
     );
 
     res.send(response.data);
