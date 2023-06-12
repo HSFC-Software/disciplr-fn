@@ -9,9 +9,10 @@ import { cors } from "../_shared/cors.ts";
 import * as queryString from "https://deno.land/x/querystring@v1.0.2/mod.js";
 import moment from "https://deno.land/x/momentjs@2.29.1-deno/mod.ts";
 
+// events
 const selectQuery = `
 *,
-event_participants!event_participants_event_id_fkey(
+event_participants(
   id,
   participant_id(
     id,
@@ -20,7 +21,8 @@ event_participants!event_participants_event_id_fkey(
     status
   )
 ),
-location_id(*)
+location_id(*),
+files(*)
 `;
 
 serve(async (req) => {
