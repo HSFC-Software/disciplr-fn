@@ -19,7 +19,8 @@ event_participants!event_participants_event_id_fkey(
     last_name,
     status
   )
-)
+),
+location_id(*)
 `;
 
 serve(async (req) => {
