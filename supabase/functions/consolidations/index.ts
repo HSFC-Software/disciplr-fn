@@ -92,6 +92,20 @@ serve(async (req) => {
       });
     }
 
+    const { error: shekelsError } = await supabase.from("shekels").insert({
+      consolidation_id: id,
+      disciple_id: data.consolidator_id,
+      amount: 7,
+    });
+
+    if (shekelsError) {
+      log("[PATCH]: Create shekels failed", req.url, { error: shekelsError });
+      return new Response(JSON.stringify({}), {
+        headers: cors({ "Content-Type": "application/json" }),
+        status: 409,
+      });
+    }
+
     return new Response(JSON.stringify(data), {
       headers: cors({ "Content-Type": "application/json" }),
       status: 200,
