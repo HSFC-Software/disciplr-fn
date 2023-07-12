@@ -18,7 +18,7 @@ router
         status
       `);
 
-    if (Boolean(req.query?.status)) {
+    if (req.query?.status) {
       query.eq("status", req.query.status);
     }
 
