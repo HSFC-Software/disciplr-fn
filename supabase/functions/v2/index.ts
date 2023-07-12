@@ -3,6 +3,7 @@ import google from "./_route/google.ts";
 import hello from "./_route/hello.ts";
 import cors from "../_shared/cors.ts";
 import events from "./_route/events/index.ts";
+import vips from "./_route/vips.ts";
 
 const app = express();
 
@@ -16,5 +17,6 @@ app.use(cors());
 app.use(google);
 app.use(hello);
 app.use(events);
+app.use(vips);
 
 await app.listen(4507);
