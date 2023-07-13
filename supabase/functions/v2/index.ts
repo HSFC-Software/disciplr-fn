@@ -6,6 +6,7 @@ import events from "./_route/events/index.ts";
 import vips from "./_route/vips.ts";
 import consolidators from "./_route/consolidators.ts";
 import disciples from "./_route/disciples.ts";
+import auth from "./_route/auth.ts";
 
 const app = express();
 
@@ -22,5 +23,6 @@ app.use(events);
 app.use(vips);
 app.use(consolidators);
 app.use(disciples);
+app.use(auth);
 
 await app.listen(4507);
