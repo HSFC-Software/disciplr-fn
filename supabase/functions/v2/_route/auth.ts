@@ -61,6 +61,23 @@ router
 
     res.send({});
   }) //
+  .get("/invite/:id", async (req, res) => {
+    const { id } = req.params;
+
+    const { data } = await supabase
+      .from("auth_invitation")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (!data) return res.status(404).send({});
+
+    if (data.expiration < moment().utc().toISOString())
+      return res.status(410).send({});
+
+    if (!data.link) return res.status(409).send({});
+    res.send(data);
+  })
   .post("/invite", async (req, res) => {
     const { disciple_id } = req.body;
 
