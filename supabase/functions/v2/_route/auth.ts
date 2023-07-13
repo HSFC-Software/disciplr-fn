@@ -82,7 +82,7 @@ router
     // todo: store this somewhere else
     // disciplr client id
     // const client_id = "0674ad00-599f-439b-8736-d36da21778cc";
-    const redirect_uri = "https://app.fishgen.org/network";
+    const redirect_uri = "https://app.fishgen.org/networks";
 
     const { disciple_id } = req.body;
 
