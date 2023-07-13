@@ -79,6 +79,11 @@ router
     res.send(data);
   })
   .post("/invite", async (req, res) => {
+    // todo: store this somewhere else
+    // disciplr client id
+    // const client_id = "0674ad00-599f-439b-8736-d36da21778cc";
+    const redirect_uri = "https://app.fishgen.org/network";
+
     const { disciple_id } = req.body;
 
     // checks if there is existing auth
@@ -93,8 +98,6 @@ router
       return res.status(409).send({});
     }
 
-    console.log(auth);
-
     if (auth) {
       // create new auth invitation
       const expiration = moment().add(7, "days").utc().toISOString();
@@ -107,7 +110,9 @@ router
 
       const { data } = await supabase
         .from("auth_invitation")
-        .update({ link: `https://sso.fishgen.org/invitation/${invite?.id}` })
+        .update({
+          link: `https://sso.fishgen.org/invitation/${invite?.id}?redirect_uri=${redirect_uri}`,
+        })
         .eq("id", invite?.id)
         .select("*")
         .single();
@@ -137,7 +142,7 @@ router
         const { data } = await supabase
           .from("auth_invitation")
           .update({
-            link: `https://sso.fishgen.org/invitation/${invite?.id}`,
+            link: `https://sso.fishgen.org/invitation/${invite?.id}?redirect_uri=${redirect_uri}`,
           })
           .eq("id", invite?.id)
           .select("*")
