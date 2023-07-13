@@ -7,6 +7,7 @@ import vips from "./_route/vips.ts";
 import consolidators from "./_route/consolidators.ts";
 import disciples from "./_route/disciples.ts";
 import auth from "./_route/auth.ts";
+import authMiddleware from "../_shared/auth.ts";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use((req, __, next) => {
 });
 
 app.use(cors());
+app.use(authMiddleware);
 
 app.use(google);
 app.use(hello);

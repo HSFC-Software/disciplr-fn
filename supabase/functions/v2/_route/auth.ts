@@ -43,6 +43,24 @@ router
 
     res.send({});
   })
+  .post("/password", async (req, res) => {
+    const id = req.locals.auth?.id;
+    const { password } = req.body;
+
+    if (!id) return res.status(401).send({});
+
+    // validates the id if it exists
+    const { error } = await supabase //
+      .from("auth")
+      .update({ password: hash(password) })
+      .eq("id", id);
+
+    if (error) {
+      return res.status(409).send({});
+    }
+
+    res.send({});
+  }) //
   .post("/invite", async (req, res) => {
     const { disciple_id } = req.body;
 

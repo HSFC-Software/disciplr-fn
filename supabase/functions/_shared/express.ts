@@ -8,6 +8,9 @@ export type Request = {
   body: any;
   locals: any;
   params: { [key: string]: string };
+  headers: {
+    get(key: string): string | null;
+  };
 };
 
 export type Headers = { [key: string]: string };
@@ -56,6 +59,7 @@ class Express {
     const query = Object.fromEntries(new URLSearchParams(url.search));
     const method = this.#app.request.method;
     const body = this.#app.meta.body;
+    const headers = this.#app.request.headers;
 
     this.#req = {
       path: baseUrl,
@@ -65,6 +69,7 @@ class Express {
       body,
       locals: {},
       params: {},
+      headers: headers,
     };
 
     this.#res = {
