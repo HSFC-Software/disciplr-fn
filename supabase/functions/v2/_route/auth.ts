@@ -1,4 +1,5 @@
 import express from "../../_shared/express.ts";
+import hash from "../../_shared/hash.ts";
 import log from "../../_shared/log.ts";
 import { supabase } from "../../_shared/supabase-client.ts";
 import moment from "https://deno.land/x/momentjs@2.29.1-deno/mod.ts";
@@ -7,6 +8,26 @@ const router = express.Router();
 
 router
   .route("/v2/auth") //
+  .patch(async (req, res) => {
+    const { invitation_id, username, password } = req.body;
+
+    const { data: invitation } = await supabase
+      .from("auth_invitation")
+      .select("auth_id")
+      .eq("id", invitation_id)
+      .single();
+
+    const { error } = await supabase
+      .from("auth")
+      .update({ username, password: hash(password) })
+      .eq("id", invitation?.auth_id);
+
+    if (error) {
+      return res.status(409).send({});
+    }
+
+    res.send({});
+  })
   .post("/invite", async (req, res) => {
     const { disciple_id } = req.body;
 
