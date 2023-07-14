@@ -61,7 +61,7 @@ router
 
     const { data: invitation } = await supabase
       .from("auth_invitation")
-      .select("auth_id")
+      .select("auth_id, created_at")
       .eq("id", invitation_id)
       .single();
 
@@ -73,6 +73,14 @@ router
     if (error) {
       return res.status(409).send({});
     }
+
+    // invalidate invitation
+    await supabase
+      .from("auth_invitation")
+      .update({
+        expiration: moment(invitation?.created_at).utc().toISOString(),
+      })
+      .eq("id", invitation_id);
 
     res.send({});
   })
