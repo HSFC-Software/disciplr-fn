@@ -10,16 +10,42 @@ const router = express.Router();
 router
   .route("/v2/auth") //
   .post(async (req, res) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("auth")
-      .select("id, username, disciple_id")
+      .select(
+        `
+        id, 
+        username,
+        disciples(
+          id,
+          email, 
+          img_url,
+          first_name,
+          last_name,
+          middle_name
+        )
+      `
+      )
       .eq("username", req.body.username)
       .eq("password", hash(req.body.password))
       .maybeSingle();
 
+    const user: any = (data as any)?.disciples_id;
+
+    const payload = {
+      avatar_url: user?.img_url,
+      picture: user?.img_url,
+      email: user?.email,
+      full_name: `${user?.fisrt_name} ${user?.middle_name} ${user?.last_name}`,
+      name: `${user?.fisrt_name} ${user?.last_name}`,
+    };
+
     if (data)
       res.send({
-        token: jwt.encode(data),
+        token: jwt.encode({
+          ...payload,
+          id: data.id,
+        }),
       });
     else res.status(401).send({});
   })
@@ -82,7 +108,7 @@ router
     // todo: store this somewhere else
     // disciplr client id
     // const client_id = "0674ad00-599f-439b-8736-d36da21778cc";
-    const redirect_uri = "https://app.fishgen.org/networks";
+    const redirect_uri = "https://app.fishgen.org/auth";
 
     const { disciple_id } = req.body;
 
@@ -126,8 +152,6 @@ router
         .insert({ disciple_id: disciple_id })
         .select("*")
         .single();
-
-      console.log(newAuth);
 
       if (newAuth) {
         // create new auth invitation
