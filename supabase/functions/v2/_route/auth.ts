@@ -3,6 +3,7 @@ import hash from "../../_shared/hash.ts";
 import { jwt } from "../../_shared/jwt.ts";
 import log from "../../_shared/log.ts";
 import shorten from "../../_shared/shorten.ts";
+import sendSMS from "../../_shared/sms.ts";
 import { supabase } from "../../_shared/supabase-client.ts";
 import moment from "https://deno.land/x/momentjs@2.29.1-deno/mod.ts";
 
@@ -130,7 +131,7 @@ router
     // checks if there is existing auth
     const { data: auth, error: authError } = await supabase
       .from("auth")
-      .select("*")
+      .select("*, disciples(contact_number)")
       .eq("disciple_id", disciple_id)
       .maybeSingle();
 
@@ -161,6 +162,15 @@ router
         .select("*")
         .single();
 
+      if (auth?.disciples?.contact_number) {
+        const send = await sendSMS(
+          auth?.disciples?.contact_number,
+          `You have been invited to join Disciplr. Click this link to continue: ${link}`
+        );
+
+        console.log({ send });
+      }
+
       return res.send(data);
     } else {
       // for new accounts
@@ -168,7 +178,7 @@ router
       const { data: newAuth } = await supabase
         .from("auth")
         .insert({ disciple_id: disciple_id })
-        .select("*")
+        .select("*, disciples(contact_number)")
         .single();
 
       if (newAuth) {
@@ -192,6 +202,15 @@ router
           .eq("id", invite?.id)
           .select("*")
           .single();
+
+        if (newAuth?.disciples?.contact_number) {
+          const send = await sendSMS(
+            newAuth?.disciples?.contact_number,
+            `You have been invited to join Disciplr. Click this link to continue: ${link}`
+          );
+
+          console.log({ send });
+        }
 
         return res.send(data);
       } else {
