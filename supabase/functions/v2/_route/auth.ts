@@ -2,6 +2,7 @@ import express from "../../_shared/express.ts";
 import hash from "../../_shared/hash.ts";
 import { jwt } from "../../_shared/jwt.ts";
 import log from "../../_shared/log.ts";
+import shorten from "../../_shared/shorten.ts";
 import { supabase } from "../../_shared/supabase-client.ts";
 import moment from "https://deno.land/x/momentjs@2.29.1-deno/mod.ts";
 
@@ -30,14 +31,20 @@ router
       .eq("password", hash(req.body.password))
       .maybeSingle();
 
-    const user: any = (data as any)?.disciples_id;
+    const user: any = (data as any)?.disciples;
+
+    const rawFullName = `${user?.first_name} ${user?.middle_name} ${user?.last_name}`;
+    const full_name = rawFullName.replace(/\s+/g, " ").trim();
+
+    const rawName = `${user?.first_name} ${user?.last_name}`;
+    const name = rawName.replace(/\s+/g, " ").trim();
 
     const payload = {
       avatar_url: user?.img_url,
       picture: user?.img_url,
       email: user?.email,
-      full_name: `${user?.fisrt_name} ${user?.middle_name} ${user?.last_name}`,
-      name: `${user?.fisrt_name} ${user?.last_name}`,
+      full_name,
+      name,
     };
 
     if (data)
@@ -134,10 +141,13 @@ router
         .select("id")
         .single();
 
+      const redirect_url = `https://sso.fishgen.org/invitation/${invite?.id}?redirect_uri=${redirect_uri}`;
+      const link = await shorten(redirect_url);
+
       const { data } = await supabase
         .from("auth_invitation")
         .update({
-          link: `https://sso.fishgen.org/invitation/${invite?.id}?redirect_uri=${redirect_uri}`,
+          link,
         })
         .eq("id", invite?.id)
         .select("*")
@@ -163,10 +173,13 @@ router
           .select("id")
           .single();
 
+        const redirect_url = `https://sso.fishgen.org/invitation/${invite?.id}?redirect_uri=${redirect_uri}`;
+        const link = await shorten(redirect_url);
+
         const { data } = await supabase
           .from("auth_invitation")
           .update({
-            link: `https://sso.fishgen.org/invitation/${invite?.id}?redirect_uri=${redirect_uri}`,
+            link,
           })
           .eq("id", invite?.id)
           .select("*")

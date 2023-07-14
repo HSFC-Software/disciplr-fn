@@ -8,6 +8,7 @@ import consolidators from "./_route/consolidators.ts";
 import disciples from "./_route/disciples.ts";
 import auth from "./_route/auth.ts";
 import authMiddleware from "../_shared/auth.ts";
+import short from "./_route/short.ts";
 
 const app = express();
 
@@ -26,5 +27,6 @@ app.use(vips);
 app.use(consolidators);
 app.use(disciples);
 app.use(auth);
+app.use(short);
 
 await app.listen(4507);
