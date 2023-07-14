@@ -1,8 +1,7 @@
 import { supabase } from "./supabase-client.ts";
 
 export default async function shorten(url: string) {
-  // const domain = "trm.cx";
-  const domain = "trmcx.netlify.app";
+  const domain = "trm.cx";
   const randomString = generateRandomString(5);
 
   const short = `${domain}/${randomString}`;
