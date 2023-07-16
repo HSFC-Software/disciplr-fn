@@ -87,9 +87,22 @@ router
   })
   .post("/password", async (req, res) => {
     const id = req.locals.auth?.id;
-    const { password } = req.body;
+    const { password, old } = req.body;
 
     if (!id) return res.status(401).send({});
+
+    // handles with old password checking
+    if (old) {
+      const { data } = await supabase
+        .from("auth")
+        .select("password")
+        .eq("id", id)
+        .single();
+
+      if (!data) return res.status(404).send({});
+
+      if (data.password !== hash(old)) return res.status(428).send({});
+    }
 
     // validates the id if it exists
     const { error } = await supabase //
@@ -167,8 +180,6 @@ router
           auth?.disciples?.contact_number,
           `You have been invited to join Disciplr. Click this link to continue: ${link}`
         );
-
-        console.log({ send });
       }
 
       return res.send(data);
