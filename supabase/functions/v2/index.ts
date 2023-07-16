@@ -9,6 +9,7 @@ import disciples from "./_route/disciples.ts";
 import auth from "./_route/auth.ts";
 import authMiddleware from "../_shared/auth.ts";
 import short from "./_route/short.ts";
+import rewards from "./_route/rewards.ts";
 
 const app = express();
 
@@ -28,5 +29,6 @@ app.use(consolidators);
 app.use(disciples);
 app.use(auth);
 app.use(short);
+app.use(rewards);
 
 await app.listen(4507);

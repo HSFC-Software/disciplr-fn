@@ -46,13 +46,15 @@ router
       email: user?.email,
       full_name,
       name,
+      disciple_id: user?.id,
     };
 
     if (data)
       res.send({
         token: jwt.encode({
           ...payload,
-          id: data.id,
+          id: data.id, // deprecate
+          auth_id: data.id,
         }),
       });
     else res.status(401).send({});
@@ -176,9 +178,9 @@ router
         .single();
 
       if (auth?.disciples?.contact_number) {
-        const send = await sendSMS(
+        await sendSMS(
           auth?.disciples?.contact_number,
-          `You have been invited to join Disciplr. Click this link to continue: ${link}`
+          `You have been invited to join Disciplr. Click this link to continue: ${redirect_url}`
         );
       }
 
