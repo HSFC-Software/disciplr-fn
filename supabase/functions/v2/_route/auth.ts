@@ -68,12 +68,25 @@ router
       .eq("id", invitation_id)
       .single();
 
-    const { error } = await supabase
+    const { error, data: auth } = await supabase
       .from("auth")
       .update({ username, password: hash(password) })
-      .eq("id", invitation?.auth_id);
+      .eq("id", invitation?.auth_id)
+      .select("disciple_id")
+      .single();
+
+    // update disciples table email
+    if (auth) {
+      await supabase
+        .from("disciples")
+        .update({ email: username })
+        .eq("id", auth.disciple_id)
+        .select("id")
+        .single();
+    }
 
     if (error) {
+      console.log({ error, invitation_id, username, password });
       return res.status(409).send({});
     }
 
@@ -118,6 +131,40 @@ router
 
     res.send({});
   }) //
+  .get("/invite/status/:disciple_id", async (req, res) => {
+    // auth from disciple_id
+    const { disciple_id } = req.params;
+
+    const { data: auth } = await supabase //
+      .from("auth")
+      .select("id")
+      .eq("disciple_id", disciple_id)
+      .single();
+
+    if (!auth) return res.status(404).send({});
+
+    const { data: invitation, error } = await supabase
+      .from("auth_invitation")
+      .select("*")
+      .eq("auth_id", auth.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) return res.status(409).send({});
+    if (!invitation) return res.status(404).send({});
+
+    const response = { ...invitation, is_expired: false };
+
+    const now = moment();
+    const expiration = moment(invitation.expiration);
+
+    if (now >= expiration) {
+      response.is_expired = true;
+    }
+
+    res.send(response);
+  })
   .get("/invite/:id", async (req, res) => {
     const { id } = req.params;
 
@@ -219,7 +266,7 @@ router
         if (newAuth?.disciples?.contact_number) {
           const send = await sendSMS(
             newAuth?.disciples?.contact_number,
-            `You have been invited to join Disciplr. Click this link to continue: ${link}`
+            `You have been invited to join Disciplr. Click this link to continue: ${redirect_url}`
           );
 
           console.log({ send });
