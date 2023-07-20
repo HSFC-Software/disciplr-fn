@@ -231,7 +231,9 @@ router
         );
       }
 
-      return res.send(data);
+      const response = { ...(data ?? {}), disciple_id };
+
+      return res.send(response);
     } else {
       // for new accounts
       // creating new auth if there is no existing auth
