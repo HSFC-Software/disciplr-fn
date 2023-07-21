@@ -1,4 +1,5 @@
 import express from "../../_shared/express.ts";
+import log from "../../_shared/log.ts";
 import { supabase } from "../../_shared/supabase-client.ts";
 
 const router = express.Router();
@@ -28,7 +29,11 @@ router
       .select()
       .single();
 
-    if (error) return res.status(409).send({});
+    if (error) {
+      log("Error adding consolidator", req.path, error);
+      return res.status(409).send({});
+    }
+
     res.send(data);
   });
 

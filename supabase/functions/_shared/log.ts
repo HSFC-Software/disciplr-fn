@@ -33,11 +33,29 @@ export default async function log(
     console.log({ error });
   }
 
-  await supabase.from("logs").insert([
+  supabase.from("logs").insert([
     {
       message,
       pathname,
       attributes: JSON.stringify(payload),
+      logtype: "info",
     },
   ]);
 }
+
+export const info = (message: string, payload: any) => {
+  axiod.post(
+    "https://log-api.newrelic.com/log/v1",
+    {
+      message,
+      payload,
+      hostname: "bsnrwmmolcbhgncwogox.functions.supabase.co",
+    },
+    {
+      headers: {
+        "Api-Key": Deno.env.get("LOG_KEY"),
+        "Content-Type": "application/json",
+      },
+    }
+  );
+};
