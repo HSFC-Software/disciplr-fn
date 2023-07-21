@@ -18,7 +18,6 @@ export default async function log(
         message,
         pathname,
         payload,
-        timestamp: Date.now(),
         logtype: "info",
         service: "edge-function",
         hostname: "bsnrwmmolcbhgncwogox.functions.supabase.co",
@@ -30,7 +29,6 @@ export default async function log(
         },
       }
     );
-    console.log("response", response);
   } catch (error) {
     console.log({ error });
   }
