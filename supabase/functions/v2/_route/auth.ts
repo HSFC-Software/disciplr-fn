@@ -141,7 +141,7 @@ router
       .eq("disciple_id", disciple_id)
       .single();
 
-    if (!auth) return res.status(404).send({});
+    if (!auth) return res.send({});
 
     const { data: invitation, error } = await supabase
       .from("auth_invitation")
@@ -154,13 +154,24 @@ router
     if (error) return res.status(409).send({});
     if (!invitation) return res.status(404).send({});
 
-    const response = { ...invitation, is_expired: false };
+    const response = { ...invitation, is_expired: false, is_registered: false };
 
     const now = moment();
     const expiration = moment(invitation.expiration);
 
     if (now >= expiration) {
       response.is_expired = true;
+    }
+
+    // from auth table check if the disciple has username
+    const { data: authData } = await supabase
+      .from("auth")
+      .select("username")
+      .eq("disciple_id", disciple_id)
+      .single();
+
+    if (authData?.username) {
+      response.is_registered = true;
     }
 
     res.send(response);
@@ -270,11 +281,11 @@ router
             newAuth?.disciples?.contact_number,
             `You have been invited to join Disciplr. Click this link to continue: ${redirect_url}`
           );
-
-          console.log({ send });
         }
 
-        return res.send(data);
+        const response = { ...(data ?? {}), disciple_id };
+
+        return res.send(response);
       } else {
         log("No auth data received after inserting auth entry", req.path, {});
         return res.status(409).send({});

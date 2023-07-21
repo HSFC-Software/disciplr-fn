@@ -1,3 +1,4 @@
+import axiod from "https://deno.land/x/axiod/mod.ts";
 import { supabase } from "./supabase-client.ts";
 
 export default async function log(
@@ -10,7 +11,31 @@ export default async function log(
     pathname,
     payload,
   });
-  const { data, error } = await supabase.from("logs").insert([
+  try {
+    axiod.post(
+      "https://log-api.newrelic.com/log/v1",
+      {
+        message,
+        pathname,
+        payload,
+        timestamp: Date.now(),
+        logtype: "info",
+        service: "edge-function",
+        hostname: "bsnrwmmolcbhgncwogox.functions.supabase.co",
+      },
+      {
+        headers: {
+          "Api-Key": Deno.env.get("LOG_KEY"),
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("response", response);
+  } catch (error) {
+    console.log({ error });
+  }
+
+  await supabase.from("logs").insert([
     {
       message,
       pathname,

@@ -1,4 +1,5 @@
 import express from "../../_shared/express.ts";
+import log from "../../_shared/log.ts";
 import { supabase } from "../../_shared/supabase-client.ts";
 
 const router = express.Router();
@@ -16,17 +17,17 @@ router
           status: "Inactive",
         }))
       )
-      .select("network_id")
-      .single();
+      .select("network_id");
 
     if (error) {
+      log("Batch: Error unlinking disciple", req.baseUrl, error);
       return res.status(409).send({});
     }
 
     const response: any = { ids };
 
-    if (data?.network_id) {
-      response.network_id = data.network_id;
+    if (data?.[0]?.network_id) {
+      response.network_id = data[0].network_id;
     }
 
     res.send(response);
