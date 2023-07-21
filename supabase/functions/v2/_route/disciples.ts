@@ -17,7 +17,7 @@ router
           q.split(" ").map(async (keyword) => {
             const { data } = await supabase
               .from("disciples")
-              .select("id, first_name, last_name")
+              .select("id, first_name, last_name, img_url")
               .or(`first_name.ilike.%${keyword}%,last_name.ilike.%${keyword}%`);
             if (data) {
               data?.forEach((result) => {
