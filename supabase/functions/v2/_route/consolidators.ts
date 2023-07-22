@@ -1,11 +1,80 @@
 import express from "../../_shared/express.ts";
 import log from "../../_shared/log.ts";
+import sendSMS from "../../_shared/sms.ts";
 import { supabase } from "../../_shared/supabase-client.ts";
 
 const router = express.Router();
 
 router
   .route("/v2/consolidators") //
+  .get("/history/:id", async (req, res) => {
+    const { id } = req.params;
+
+    const { data: consolidator } = await supabase
+      .from("consolidators_disciples")
+      .select("*, disciple_id(*)")
+      .eq("id", id)
+      .single();
+
+    const { data, error } = await supabase
+      .from("consolidations")
+      .select(
+        `
+        id,
+        lesson_code (
+          code,
+          name,
+          title
+        ),
+        created_at,
+        status
+      `
+      )
+      .eq("consolidators_disciples_id", id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      log(
+        "Get consolidation by consolidators_disciples_id failed",
+        req.baseUrl,
+        {
+          error,
+        }
+      );
+      return res.status(409).send({});
+    }
+
+    const response = {
+      recent: data?.[0] || {},
+      disciple: consolidator?.disciple_id,
+      history: data,
+    };
+
+    res.send(response);
+  })
+  .get("/:consolidator_id", async (req, res) => {
+    const { consolidator_id } = req.params;
+
+    const query = supabase
+      .from("consolidators_disciples")
+      .select(
+        `
+        *,
+        disciple_id(*),
+        consolidator_id(*)
+      `
+      )
+      .eq("consolidator_id", consolidator_id);
+
+    const consolidators = await query;
+
+    if (consolidators.error) {
+      log("Error getting consolidator", req.path, consolidators.error);
+      return res.status(409).send({});
+    }
+
+    res.send(consolidators?.data);
+  })
   .get(async (_, res) => {
     const query = supabase.from("consolidators_disciples") //
       .select(`
@@ -32,6 +101,32 @@ router
     if (error) {
       log("Error adding consolidator", req.path, error);
       return res.status(409).send({});
+    }
+
+    const { data: consolidator } = await supabase
+      .from("disciples")
+      .select("contact_number")
+      .eq("id", consolidator_id)
+      .single();
+
+    if (consolidator?.contact_number) {
+      sendSMS(
+        consolidator?.contact_number,
+        "A New disciple has been added to your consolidation list. Check it now! https://app.fishgen.org/conso/list",
+        "Disciplr"
+      );
+    }
+
+    // remove vip if needed
+    const { error: vipError } = await supabase
+      .from("vips")
+      .update({
+        status: "ASSIGNED",
+      })
+      .eq("disciple_id", disciple_id);
+
+    if (vipError) {
+      log("Error removing vip from list", req.baseUrl, vipError);
     }
 
     res.send(data);

@@ -11,6 +11,7 @@ import authMiddleware from "../_shared/auth.ts";
 import short from "./_route/short.ts";
 import rewards from "./_route/rewards.ts";
 import batch from "./_route/batch.ts";
+import consolidations from "./_route/consolidations.ts";
 
 const app = express();
 
@@ -32,5 +33,6 @@ app.use(auth);
 app.use(short);
 app.use(rewards);
 app.use(batch);
+app.use(consolidations);
 
 await app.listen(4507);
