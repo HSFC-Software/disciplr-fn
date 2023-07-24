@@ -68,6 +68,15 @@ router
       .eq("id", invitation_id)
       .single();
 
+    // check if there is existing username
+    const { data: existing } = await supabase
+      .from("auth")
+      .select("id")
+      .eq("username", username)
+      .single();
+
+    if (existing) return res.status(409).send({});
+
     const { error, data: auth } = await supabase
       .from("auth")
       .update({ username, password: hash(password) })
@@ -87,7 +96,7 @@ router
 
     if (error) {
       console.log({ error, invitation_id, username, password });
-      return res.status(409).send({});
+      return res.status(400).send({});
     }
 
     // invalidate invitation

@@ -144,18 +144,27 @@ Disciplr Team
         color: #fff;
         font-weight: bold;
         margin-bottom: 10px;
+        display: inline-block;
+        text-decoration: none;
       }
     </style>
   </head>
   <body>
-    <h3>Reset your Disciplr Password</h3> 
+    <h3>Reset your Disciplr Password</h3>
 
-    <p>Someone requested that we reset the password for your Disciplr account.</p>
+    <p>
+      Someone requested that we reset the password for your Disciplr account.
+    </p>
     <div>If this was you, please follow this link:</div>
 
     <a href="${await shorten(email_redirect)}" class="action">Reset Password</a>
 
-    <p>If this wasn't you, please report this e-mail to us at <a href="mailto:app.disiplr+support@gmail.com">app.disiplr+support@gmail.com</a></p>
+    <p>
+      If this wasn't you, please report this e-mail to us at
+      <a href="mailto:app.disiplr+support@gmail.com"
+        >app.disiplr+support@gmail.com</a
+      >
+    </p>
 
     <div>Yours,</div>
     <div>Disciplr Team</div>
