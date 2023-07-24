@@ -73,7 +73,33 @@ router
       return res.status(409).send({});
     }
 
-    res.send(consolidators?.data);
+    const conso: any = consolidators?.data;
+
+    const response = await Promise.all(
+      conso?.map(async (item: any) => {
+        const { data } = await supabase
+          .from("consolidations")
+          .select(
+            `
+          lesson_code (
+            code,
+            name
+          )
+        `
+          )
+          .eq("consolidators_disciples_id", item?.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        return {
+          ...item,
+          lesson_code: data?.lesson_code,
+        };
+      })
+    );
+
+    res.send(response);
   })
   .get(async (_, res) => {
     const query = supabase.from("consolidators_disciples") //
