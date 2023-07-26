@@ -7,6 +7,45 @@ const router = express.Router();
 
 router
   .route("/v2/consolidators") //
+  .get("/recent/:id", async (req, res) => {
+    const { id } = req.params;
+
+    const { count } = await supabase
+      .from("consolidations")
+      .select("*", { count: "exact", head: true })
+      .eq("consolidators_disciples_id", id);
+
+    if (!count) return res.send({});
+
+    const { data, error } = await supabase
+      .from("consolidations")
+      .select(
+        `
+      id,
+      lesson_code (
+        code,
+        name,
+        title
+      ),
+      created_at,
+      status
+    `
+      )
+      .eq("consolidators_disciples_id", id)
+      .eq("status", "PUBLISHED")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      log("Unable to get recent consolidations", req.baseUrl, {
+        error,
+      });
+      return res.status(404).send({});
+    }
+
+    res.send(data);
+  })
   .get("/history/:id", async (req, res) => {
     const { id } = req.params;
 
@@ -55,8 +94,6 @@ router
   .patch("/:id", async (req, res) => {
     const { id } = req.params;
     const { consolidator_id } = req.body;
-
-    console.log({ id, consolidator_id });
 
     const { error, data } = await supabase
       .from("consolidators_disciples")
@@ -141,7 +178,35 @@ router
 
     res.send(response);
   })
-  .get(async (_, res) => {
+  .get(async (req, res) => {
+    const q = req.query.q;
+
+    if (q) {
+      const searchQ = q
+        .split(" ")
+        .map((item) => {
+          item = item.trim();
+          if (!item) return "";
+          return `%${item}%`;
+        })
+        .filter(Boolean);
+
+      const { data, error } = await supabase.rpc("query_consolidators", {
+        names: searchQ,
+      }).select(`
+        *,
+        consolidator_id(*),
+        disciple_id(*)
+      `);
+
+      if (error) {
+        log("Error searching consolidators", req.path, error);
+        return res.status(409).send({});
+      }
+
+      return res.send(data);
+    }
+
     const query = supabase
       .from("consolidators_disciples") //
       .select(
@@ -151,7 +216,7 @@ router
         consolidator_id(*)
       `
       )
-      .limit(10)
+      .limit(5)
       .order("created_at", { ascending: false });
 
     const consolidators = await query;
