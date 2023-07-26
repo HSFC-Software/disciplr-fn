@@ -12,7 +12,7 @@ const header = { alg: "HS256", typ: "JWT" };
 
 export const jwt = {
   encode: (payload: any) => {
-    const exp = Date.now() + 1000 * 60 * 60 * 24 * 1; // 1 days
+    const exp = Date.now() + 1000 * 60 * 60 * 24 * 7; // 1 days
 
     const data = { exp, ...payload };
     const secretKey = Deno.env.get("PASSWORD_HASH") ?? "";
