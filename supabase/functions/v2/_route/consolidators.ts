@@ -52,6 +52,46 @@ router
 
     res.send(response);
   })
+  .patch("/:id", async (req, res) => {
+    const { id } = req.params;
+    const { consolidator_id } = req.body;
+
+    console.log({ id, consolidator_id });
+
+    const { error, data } = await supabase
+      .from("consolidators_disciples")
+      .update({
+        consolidator_id,
+      })
+      .eq("id", id)
+      .select(
+        `
+        *, 
+        consolidator_id(contact_number)
+      `
+      )
+      .single();
+
+    if (error) {
+      log("Error updating consolidator", req.baseUrl, error);
+      return res.status(409).send({});
+    }
+
+    if (!data) {
+      log(`Unable to find consolidator: ${id}`, req.baseUrl, {});
+      return res.status(404).send({});
+    }
+
+    if (data.contact_number) {
+      sendSMS(
+        data.contact_number,
+        "A New disciple has been added to your consolidation list. Check it now! https://app.fishgen.org/conso/list",
+        "Disciplr"
+      );
+    }
+
+    return res.send(data);
+  })
   .get("/:consolidator_id", async (req, res) => {
     const { consolidator_id } = req.params;
 
@@ -102,12 +142,17 @@ router
     res.send(response);
   })
   .get(async (_, res) => {
-    const query = supabase.from("consolidators_disciples") //
-      .select(`
+    const query = supabase
+      .from("consolidators_disciples") //
+      .select(
+        `
         *,
         disciple_id(*),
         consolidator_id(*)
-      `);
+      `
+      )
+      .limit(10)
+      .order("created_at", { ascending: false });
 
     const consolidators = await query;
     res.send(consolidators?.data);
