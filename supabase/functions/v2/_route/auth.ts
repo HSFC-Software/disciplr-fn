@@ -28,7 +28,7 @@ router
         )
       `
       )
-      .eq("username", req.body.username)
+      .eq("username", req.body.username?.toLowerCase?.())
       .eq("password", hash(req.body.password))
       .maybeSingle();
 
